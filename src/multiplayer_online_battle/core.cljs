@@ -9,10 +9,12 @@
 
 (defonce app-state (atom {:text "Hello world!"}))
 
-(defn hello-world []
-  [:h1 (:text @app-state)])
+(defn simple-component []
+  )
 
-(reagent/render-component [hello-world]
+
+
+(reagent/render-component [simple-component]
                           (. js/document (getElementById "app")))
 
 (defn on-js-reload []
