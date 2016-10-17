@@ -1,5 +1,6 @@
 (ns multiplayer-online-battle.login
   (:require [cljs.core.async :refer [<! >! chan close!]]
+            [clojure.string :as str]
             [reagent.core :as r :refer [atom]]
             [ajax.core :refer [GET POST]]
             [multiplayer-online-battle.utils :refer [ajax-call debug-info]]))
@@ -29,4 +30,12 @@
           [:div.form-group
            [:div.row
             [:div.col-sm-6.col-sm-offset-3
-             [:input {:type "submit" :name "register-submit" :id "register-submit" :class "form-control btn btn-register" :value "Confirm" :on-click #(ajax-call POST "/register-user-info" {:username @input-val})}]]]]]]]]]]]])
+             [:input {:type "submit" 
+                      :name "register-submit"
+                      :id "register-submit"
+                      :class "form-control btn btn-register"
+                      :value "Confirm"
+                      :disabled (if (str/blank? @input-val)
+                                  true
+                                  false)
+                      :on-click #(ajax-call POST "/register-user-info" {:username @input-val})}]]]]]]]]]]]])
