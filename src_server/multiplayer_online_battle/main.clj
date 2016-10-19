@@ -1,14 +1,20 @@
 (ns multiplayer-online-battle.main
   (:gen-class)
-  (:require [org.httpkit.server :refer [run-server]]))
+  (:require [org.httpkit.server :refer [run-server]]
+            [ring.middleware.reload :as reload]
+            (compojure [core :refer [defroutes context routes GET POST ANY]]
+                       [route :as route]
+                       [handler :refer [site]])))
 
 (defn app [req]
   {:status  200
    :headers {"Content-Type" "text/html"}
    :body    "hello HTTP!"})
 
-(defn foo [] 
-  (+ 1 1))
+(defn bar [] 
+  (+ 1 2))
+
+(defn in-dev? [_] true)
 
 (defonce server (atom nil))
 
@@ -19,9 +25,13 @@
     (@server :timeout 100)
     (reset! server nil)))
 
-(defn -main [& args]
-  (print "haha")
-  ;; The #' is useful when you want to hot-reload code
-  ;; You may want to take a look: https://github.com/clojure/tools.namespace
-  ;; and http://http-kit.org/migration.html#reload
-  (reset! server (run-server app {:port 8080})))
+(defroutes all-routes
+  (GET "/" [] "handling-page!!!")
+  (route/not-found "<p>Page not found.</p>")) ;; all other, return 404
+
+(defn -main [& args] ;; entry point, lein run will pick up and start from here
+  (let [handler (if (in-dev? args)
+                  (reload/wrap-reload (site #'all-routes)) ;; only reload when dev
+                  (site all-routes))]
+    (run-server handler {:port 8080})))
+
