@@ -11,14 +11,28 @@
                  [org.clojure/core.async "0.2.391"
                   :exclusions [org.clojure/tools.reader]]
 
+                 ;;http server
+                 [http-kit "2.2.0"]
+
+                 ;;routing
+                 [compojure "1.5.1"]
+
+                 ;;library for web app
+                 [ring "1.5.0"]
+
                  ;;front-end
                  [reagent "0.6.0"]
                  [cljs-ajax "0.5.8"]]
 
   :plugins [[lein-figwheel "0.5.8"]
-            [lein-cljsbuild "1.1.4" :exclusions [[org.clojure/clojure]]]]
+            [lein-cljsbuild "1.1.4" :exclusions [[org.clojure/clojure]]]
+            [lein-ring "0.9.7"]]
 
-  :source-paths ["src_cljs"]
+  ;;allow lein run to find a entry point to start
+  :main multiplayer-online-battle.main
+
+  ;;source code paths
+  :source-paths ["src_server", "src_cljs"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
@@ -104,7 +118,7 @@
                    ;; for CIDER
                    ;; :plugins [[cider/cider-nrepl "0.12.0"]]
                    :repl-options {; for nREPL dev you really need to limit output
-                                  :init (set! *print-length* 50)
+                                  ;:init (set! *print-length* 50)
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}}
 
 )
