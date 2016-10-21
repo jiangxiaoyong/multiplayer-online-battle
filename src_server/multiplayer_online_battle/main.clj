@@ -1,10 +1,13 @@
 (ns multiplayer-online-battle.main
   (:gen-class)
-  (:require [org.httpkit.server :refer [run-server]]
+  (:require [org.httpkit.server :as server]
             [ring.middleware.reload :as reload]
             (compojure [core :refer [defroutes context routes GET POST ANY]]
                        [route :as route]
-                       [handler :refer [site]])))
+                       [handler :refer [site]])
+            [clojure.tools.logging :as log]
+            [taoensso.sente :as sente]
+            [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]))
 
 (defn app [req]
   {:status  200
@@ -26,12 +29,28 @@
     (reset! server nil)))
 
 (defroutes all-routes
-  (GET "/" [] "handling-page!!!")
+  (GET "/" [] "handling-page")
   (route/not-found "<p>Page not found.</p>")) ;; all other, return 404
 
 (defn -main [& args] ;; entry point, lein run will pick up and start from here
   (let [handler (if (in-dev? args)
                   (reload/wrap-reload (site #'all-routes)) ;; only reload when dev
                   (site all-routes))]
-    (run-server handler {:port 8080})))
+    (reset! server (server/run-server handler {:port 8080}))))
 
+(declare channel-socket)
+
+(defn start-websocket []
+  (defonce channel-socket
+    (sente/make-channel-socket-server! sente-web-server-adapter)))
+
+(defn start!
+  []
+  (log/info "Starting serever...")
+  ;;(start-websocket)
+  ;;(start-router)
+  ;;(start-web-server)
+  )
+
+
+(defn -main [& args] (start!))

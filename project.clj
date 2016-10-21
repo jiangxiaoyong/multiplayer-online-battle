@@ -20,6 +20,12 @@
                  ;;library for web app
                  [ring "1.5.0"]
 
+                 ;;websocket
+                 [com.taoensso/sente "1.11.0"]
+
+                 ;;logging
+                 [org.clojure/tools.logging "0.3.1"]
+
                  ;;front-end
                  [reagent "0.6.0"]
                  [cljs-ajax "0.5.8"]]
