@@ -3,6 +3,7 @@
   (:require [org.httpkit.server :as server]
             [ring.middleware.reload :as reload]
             [ring.middleware.defaults :as defaults]
+            [ring.util.response :as response]
             (compojure [core :refer [defroutes context routes GET POST ANY]]
                        [route :as route]
                        [handler :refer [site]])
@@ -15,12 +16,14 @@
 
 (declare channel-socket)
 
-(defn landing-pg-handler [_]
-  (str "<p>hello world</p>"))
+(defn home-pg-handler [_]
+  (response/content-type 
+   (response/resource-response "public/index.html")
+   "text/html"))
 
 ;;---------- Define routing ----------------
 (defroutes all-routes
-  (GET  "/"     req (landing-pg-handler req))
+  (GET  "/"     req (home-pg-handler req))
   (GET  "/chsk" req ((:ajax-get-or-ws-handshake-fn channel-socket) req))
   (POST "/chsk" req ((:ajax-post-fn channel-socket) req))
   (GET  "/status" req (str "Connected id: " (pr-str @ (:connected-uids channel-socket))))
@@ -77,7 +80,7 @@
 (defn start-ws-ev-router []
   (log/info "Starting socket event router...")
   (stop-router)
-  (reset! event-router (sente/start-chsk-router! (:ch-recv channel-socket) event!)))
+  (reset! event-router (sente/start-server-chsk-router! (:ch-recv channel-socket) event!)))
 
 ;;------------Set up Websockt-------------------
 (defn start-websocket []
