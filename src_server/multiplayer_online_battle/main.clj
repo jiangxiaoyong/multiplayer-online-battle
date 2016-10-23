@@ -55,20 +55,25 @@
     (reset! web-server {:stop-fn stop-fn})))
 
 ;;----------- Sente events handler-------------
-(defmulti event 
-  "Dispaching event message basd on event-id"
-  :id)
-
-(defn event! [{:as ev-msg :keys [id ?data event]}]
-  (prn "Evnet-message : " ev-msg)
-  (debugf "Sente debug event-message : " ev-msg)
-  (event ev-msg))
+(defmulti event :id)
 
 (defmethod event :default
   [{:as ev-msg :keys [event ?reply-fn]}]
-  (prn "Unhandeled event: " event)
+  (log/info "Unhandeled event: " event)
   (when ?reply-fn
-    (?reply-fn {::umatched-event-as-echoed-from-from-server event})))
+    (?reply-fn {:umatched-event-as-echoed-from-from-server event})))
+
+(defmethod event :test/game
+  [{:as ev-msg :keys [id ?data event]}]
+  (log/info "TEST Event id:" id)
+  (log/info "TEST Event data: " ?data)
+  (log/info "TEST Evnet event: " event))
+
+(defmethod event :register-user/username
+  [{:as ev-msg :keys [id ?data event]}]
+  (log/info "TEST Event id:" id)
+  (log/info "TEST Event data: " ?data)
+  (log/info "TEST Evnet event: " event))
 
 ;;------------Set up Sente events router-------------
 (defonce event-router (atom nil))
@@ -80,13 +85,13 @@
 (defn start-ws-ev-router []
   (log/info "Starting socket event router...")
   (stop-router)
-  (reset! event-router (sente/start-server-chsk-router! (:ch-recv channel-socket) event!)))
+  (reset! event-router (sente/start-chsk-router! (:ch-recv channel-socket) event)))
 
 ;;------------Set up Websockt-------------------
 (defn start-websocket []
   (log/info "Starting websockt...")
   (def channel-socket
-    (sente/make-channel-socket-server! sente-web-server-adapter)))
+    (sente/make-channel-socket! sente-web-server-adapter)))
 
 (defn start!
   []

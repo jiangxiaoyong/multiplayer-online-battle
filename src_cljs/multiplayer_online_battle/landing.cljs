@@ -1,15 +1,18 @@
-(ns multiplayer-online-battle.login
+(ns multiplayer-online-battle.landing
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! >! chan close!]]
             [clojure.string :as str]
             [reagent.core :as r :refer [atom]]
             [ajax.core :refer [GET POST]]
-            [multiplayer-online-battle.utils :refer [ajax-call debug-info]]))
+            [multiplayer-online-battle.utils :refer [ajax-call debug-info]]
+            [multiplayer-online-battle.comm :as comm]))
 
 (enable-console-print!)
 
 (def input-val (r/atom ""))
 
-(defn register-user-info []
+
+(defn register-user-info [ch-out]
   [:div.container
    [:div.row
     [:div.col-md-6.col-md-offset-3
@@ -30,7 +33,7 @@
           [:div.form-group
            [:div.row
             [:div.col-sm-6.col-sm-offset-3
-             [:input {:type "submit" 
+             [:input {
                       :name "register-submit"
                       :id "register-submit"
                       :class "form-control btn btn-register"
@@ -38,4 +41,6 @@
                       :disabled (if (str/blank? @input-val)
                                   true
                                   false)
-                      :on-click #(ajax-call POST "/register-user-info" {:username @input-val})}]]]]]]]]]]]])
+                      :on-click #(do
+                                   (go
+                                     (>! ch-out [:register-user/username {:username @input-val}])))}]]]]]]]]]]]])

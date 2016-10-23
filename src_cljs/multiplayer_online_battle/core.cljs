@@ -3,8 +3,10 @@
   (:require [reagent.core :as r :refer [atom]]
             [ajax.core :refer [GET POST]]
             [cljs.core.async :refer [<! >! put! take! chan close! timeout]]
-            [multiplayer-online-battle.login :refer [register-user-info]]
-            [multiplayer-online-battle.utils :refer [ajax-call debug-info]]))
+            [clojure.pprint :refer [pprint]]
+            [multiplayer-online-battle.landing :refer [register-user-info]]
+            [multiplayer-online-battle.utils :refer [ajax-call]]
+            [multiplayer-online-battle.comm :refer [ws-chan]]))
 
 (enable-console-print!)
 
@@ -13,15 +15,16 @@
 ;; define your app data so that it doesn't get over-written on reload
 
 (defn app []
-  (r/create-class
-   {:component-will-mount (fn [_]
-                            (js/console.log "app component will mount"))
-    :component-did-mount (fn [_]
-                           (js/console.log "app component did mount"))
-    :component-will-unmount (fn [_]
-                              (js/console.log "app component will Unmount"))
-    :reagent-render (fn [_]
-                      (register-user-info))}))
+  (let [{:keys [ch-in ch-out]} (ws-chan)]
+    (r/create-class
+     {:component-will-mount (fn [_]
+                              (js/console.log "app component will mount"))
+      :component-did-mount (fn [_]
+                             (js/console.log "app component did mount"))
+      :component-will-unmount (fn [_]
+                                (js/console.log "app component will Unmount"))
+      :reagent-render (fn [_]
+                        (register-user-info ch-out))})))
 
 (defn mount-app []
   (if-let [app-dom (.getElementById js/document "app")]
