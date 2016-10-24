@@ -43,4 +43,5 @@
                           :on-click #(do
                                        (go
                                          (>! ch-out [:register-user/username {:username @input-val}]))
-                                       (swap! component-attr assoc-in [:landing-pg :animate] "animated fadeOutDown"))}]]]]]]]]]]]])))
+                                       (swap! component-attr assoc-in [:landing-pg :animate] "animated fadeOutDown")
+                                       (swap! component-attr assoc-in [:game-loby :visibility] ""))}]]]]]]]]]]]])))

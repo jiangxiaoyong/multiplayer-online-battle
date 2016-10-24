@@ -6,7 +6,8 @@
             [clojure.pprint :refer [pprint]]
             [multiplayer-online-battle.landing :refer [register-user-info]]
             [multiplayer-online-battle.utils :refer [ajax-call]]
-            [multiplayer-online-battle.comm :refer [ws-chan]]))
+            [multiplayer-online-battle.comm :refer [ws-chan]]
+            [multiplayer-online-battle.game-loby :refer [game-loby]]))
 
 (enable-console-print!)
 
@@ -23,8 +24,10 @@
                              (js/console.log "app component did mount"))
       :component-will-unmount (fn [_]
                                 (js/console.log "app component will Unmount"))
-      :reagent-render (fn [_]
-                        (register-user-info ch-out component-attr))})))
+      :reagent-render (fn []
+                        [:div
+                         [game-loby ch-in ch-out component-attr]
+                         [register-user-info ch-out component-attr]])})))
 
 (defn mount-app []
   (if-let [app-dom (.getElementById js/document "app")]
