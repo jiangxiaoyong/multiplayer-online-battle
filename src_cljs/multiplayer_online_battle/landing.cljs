@@ -12,8 +12,9 @@
 (def input-val (r/atom ""))
 
 
-(defn register-user-info [ch-out]
-  [:div.container
+(defn register-user-info [ch-out component-attr]
+  [:div.container {:class (get-in @component-attr [:landing-pg :animate]) 
+                   :style {:display (get-in @component-attr [:landing-pg :visibility])}}
    [:div.row
     [:div.col-md-6.col-md-offset-3
      [:div.panel.panel-login
@@ -33,8 +34,7 @@
           [:div.form-group
            [:div.row
             [:div.col-sm-6.col-sm-offset-3
-             [:input {
-                      :name "register-submit"
+             [:input {:name "register-submit"
                       :id "register-submit"
                       :class "form-control btn btn-register"
                       :value "Confirm"
@@ -43,4 +43,5 @@
                                   false)
                       :on-click #(do
                                    (go
-                                     (>! ch-out [:register-user/username {:username @input-val}])))}]]]]]]]]]]]])
+                                     (>! ch-out [:register-user/username {:username @input-val}]))
+                                   (swap! component-attr assoc-in [:landing-pg :animate] "animated fadeOutDown"))}]]]]]]]]]]]])

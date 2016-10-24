@@ -10,9 +10,9 @@
 
 (enable-console-print!)
 
-(println "This text is printed from src/multiplayer-online-battle/core.cljs. Go ahead and edit it and see reloading in action.")
-
-;; define your app data so that it doesn't get over-written on reload
+(def component-attr (r/atom {}))
+(reset! component-attr {:game-loby {:visibility "none" :animate "animated fadeInDown"} 
+                        :landing-pg {:visibility "" :animate "animated fadeInDown"}})
 
 (defn app []
   (let [{:keys [ch-in ch-out]} (ws-chan)]
@@ -24,7 +24,7 @@
       :component-will-unmount (fn [_]
                                 (js/console.log "app component will Unmount"))
       :reagent-render (fn [_]
-                        (register-user-info ch-out))})))
+                        (register-user-info ch-out component-attr))})))
 
 (defn mount-app []
   (if-let [app-dom (.getElementById js/document "app")]
