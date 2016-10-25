@@ -15,17 +15,17 @@
 
 (defn ws-chan []
   (init-ws)
-  (let [ch-in (chan)
-        ch-out (chan)]
+  (let [ws-in (chan)
+        ws-out (chan)]
     (go-loop []
-      (let [[msg ch] (alts! [ws-recv ch-out])]
+      (let [[msg ch] (alts! [ws-recv ws-out])]
         (cond
          (= ch ws-recv) (do
                          (log "receiving msg: " msg)
-                         (>! ch-in msg))
-         (= ch ch-out) (do
+                         (>! ws-in msg))
+         (= ch ws-out) (do
                          (log "sending msg: " msg)
                          (ws-send msg))))
       (recur))
-    {:ch-in ch-in
-     :ch-out ch-out}))
+    {:ws-in ws-in
+     :ws-out ws-out}))

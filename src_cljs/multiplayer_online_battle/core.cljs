@@ -6,7 +6,6 @@
             [cljs.core.async :refer [<! >! put! take! chan close! timeout]]
             [multiplayer-online-battle.landing :refer [landing]]
             [multiplayer-online-battle.utils :refer [ajax-call mount-dom]]
-            [multiplayer-online-battle.comm :refer [ws-chan]]
             [multiplayer-online-battle.states :refer [components-state]]))
 
 (enable-console-print!)

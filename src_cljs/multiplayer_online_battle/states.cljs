@@ -8,6 +8,6 @@
 (enable-console-print!)
 
 (def components-state (r/atom {}))
-(reset! components-state {:game-loby {:visibility "" :animate "animated fadeInDown"} 
-                         :landing-pg {:visibility "" :animate "animated fadeInDown"}})
+(reset! components-state {:game-loby {:animate "animated fadeInDown"} 
+                          :landing-pg {:animate "animated fadeInDown"}})
 
