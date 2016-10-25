@@ -5,16 +5,18 @@
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [ajax.core :refer [GET POST]]
-            [multiplayer-online-battle.utils :refer [ajax-call debug-info]]
-            [multiplayer-online-battle.comm :as comm]))
+            [multiplayer-online-battle.utils :refer [ajax-call mount-dom]]
+            [multiplayer-online-battle.comm :refer [ws-chan]]
+            [multiplayer-online-battle.game-loby :refer [game-loby]]
+            [multiplayer-online-battle.states :refer [components-state]]))
 
 (enable-console-print!)
 
-(defn register-user-info [ch-out component-attr]
+(defn register-user-info [ch-out component-state]
   (let [input-val (r/atom "")]
     (fn []
-      [:div.container {:class (get-in @component-attr [:landing-pg :animate]) 
-                       :style {:display (get-in @component-attr [:landing-pg :visibility])}}
+      [:div#landing-pg.container {:class (get-in @component-state [:landing-pg :animate]) 
+                       :style {:display (get-in @component-state [:landing-pg :visibility])}}
        [:div.row
         [:div.col-md-6.col-md-offset-3
          [:div.panel.panel-login
@@ -44,5 +46,21 @@
                           :on-click #(do
                                        (go
                                          (>! ch-out [:register-user/username {:username @input-val}]))
-                                       (swap! component-attr assoc-in [:landing-pg :animate] "animated fadeOutDown")
-                                       (swap! component-attr assoc-in [:game-loby :visibility] ""))}]]]]]]]]]]]])))
+                                       ;;(swap! component-attr assoc-in [:landing-pg :animate] "animated fadeOutDown")
+                                       (.remove (.getElementById js/document "landing-pg"))
+                                       (mount-dom #'game-loby)
+                                       (swap! component-state assoc-in [:game-loby :visibility] ""))}]]]]]]]]]]]])))
+
+(defn landing []
+  (let [{:keys [ch-in ch-out]} (ws-chan)]
+    (r/create-class
+     {:component-will-mount (fn [_]
+                              (log "app component will mount"))
+      :component-did-mount (fn [_]
+                             (log "app component did mount"))
+      :component-will-unmount (fn [_]
+                                (log "app component will Unmount"))
+      :reagent-render (fn []
+                        [register-user-info ch-out components-state])})))
+
+
