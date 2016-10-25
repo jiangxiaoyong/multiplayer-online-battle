@@ -1,9 +1,9 @@
 (ns multiplayer-online-battle.core
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [reagent.core :as r :refer [atom]]
+            [reagent.debug :refer [dbg log prn]]
             [ajax.core :refer [GET POST]]
             [cljs.core.async :refer [<! >! put! take! chan close! timeout]]
-            [clojure.pprint :refer [pprint]]
             [multiplayer-online-battle.landing :refer [register-user-info]]
             [multiplayer-online-battle.utils :refer [ajax-call]]
             [multiplayer-online-battle.comm :refer [ws-chan]]
@@ -19,28 +19,32 @@
   (let [{:keys [ch-in ch-out]} (ws-chan)]
     (r/create-class
      {:component-will-mount (fn [_]
-                              (js/console.log "app component will mount"))
+                              (log "app component will mount"))
       :component-did-mount (fn [_]
-                             (js/console.log "app component did mount"))
+                             (log "app component did mount"))
       :component-will-unmount (fn [_]
-                                (js/console.log "app component will Unmount"))
+                                (log "app component will Unmount"))
       :reagent-render (fn []
                         [:div
                          [game-loby ch-in ch-out component-attr]
                          [register-user-info ch-out component-attr]])})))
 
-(defn mount-app []
+;;for figwheel auto reload
+;; (r/render-component [app]
+;;                     (. js/document (getElementById "app")))
+
+(defn mount-dom []
   (if-let [app-dom (.getElementById js/document "app")]
     (r/render-component
      [app]
      app-dom)))
 
-(defn ^:export run []
-  (mount-app))
+(defn fig-reload []
+  (.log js/console "figwheel reloaded! ")
+  (mount-dom))
 
-;;for figwheel auto reload
-(r/render-component [app]
-                    (. js/document (getElementById "app")))
+(defn ^:export run []
+  (mount-dom))
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on

@@ -2,8 +2,8 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! >! put! take! chan close! alts! timeout]]
             [taoensso.sente  :as sente :refer (cb-success?)]
-            [clojure.pprint :refer [pprint]]
-            [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]))
+            [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
+            [reagent.debug :refer [dbg log prn]]))
 
 (enable-console-print!)
 
@@ -21,10 +21,10 @@
       (let [[msg ch] (alts! [ws-recv ch-out])]
         (cond
          (= ch ws-recv) (do
-                         (js/console.log "receiving msg: " msg)
+                         (log "receiving msg: " msg)
                          (>! ch-in msg))
          (= ch ch-out) (do
-                         (js/console.log "sending msg: " msg)
+                         (log "sending msg: " msg)
                          (ws-send msg))))
       (recur))
     {:ch-in ch-in

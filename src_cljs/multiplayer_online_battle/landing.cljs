@@ -3,6 +3,7 @@
   (:require [cljs.core.async :refer [<! >! chan close!]]
             [clojure.string :as str]
             [reagent.core :as r :refer [atom]]
+            [reagent.debug :refer [dbg log prn]]
             [ajax.core :refer [GET POST]]
             [multiplayer-online-battle.utils :refer [ajax-call debug-info]]
             [multiplayer-online-battle.comm :as comm]))
