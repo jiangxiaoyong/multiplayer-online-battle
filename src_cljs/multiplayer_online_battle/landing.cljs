@@ -10,7 +10,7 @@
 
 (enable-console-print!)
 
-(defn register-user-info [ch-out component-state]
+(defn register-user-info [ws-out component-state]
   (let [input-val (r/atom "")]
     (fn []
       [:div#landing-pg.container {:class (get-in @component-state [:landing-pg :animate])}
@@ -42,8 +42,7 @@
                                       false)
                           :on-click #(do
                                        (go
-                                         (log "inside go")
-                                         (>! ch-out [:register-user/username {:username @input-val}]))
+                                         (>! ws-out [:register-user/username {:username @input-val}]))
                                        (.remove (.getElementById js/document "landing-pg"))
                                        (mount-dom #'game-loby))}]]]]]]]]]]]])))
 
