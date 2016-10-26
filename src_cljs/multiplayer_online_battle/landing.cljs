@@ -4,8 +4,7 @@
             [clojure.string :as str]
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
-            [ajax.core :refer [GET POST]]
-            [multiplayer-online-battle.utils :refer [ajax-call mount-dom ws-in ws-out]]
+            [multiplayer-online-battle.utils :refer [mount-dom ws-in ws-out]]
             [multiplayer-online-battle.game-loby :refer [game-loby]]
             [multiplayer-online-battle.states :refer [components-state]]))
 
@@ -14,8 +13,7 @@
 (defn register-user-info [ch-out component-state]
   (let [input-val (r/atom "")]
     (fn []
-      [:div#landing-pg.container {:class (get-in @component-state [:landing-pg :animate]) 
-                                  :style {:display (get-in @component-state [:landing-pg :visibility])}}
+      [:div#landing-pg.container {:class (get-in @component-state [:landing-pg :animate])}
        [:div.row
         [:div.col-md-6.col-md-offset-3
          [:div.panel.panel-login
@@ -44,6 +42,7 @@
                                       false)
                           :on-click #(do
                                        (go
+                                         (log "inside go")
                                          (>! ch-out [:register-user/username {:username @input-val}]))
                                        (.remove (.getElementById js/document "landing-pg"))
                                        (mount-dom #'game-loby))}]]]]]]]]]]]])))

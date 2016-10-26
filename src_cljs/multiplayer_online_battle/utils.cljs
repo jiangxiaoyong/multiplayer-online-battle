@@ -15,13 +15,7 @@
     (def ws-in ws-in)
     (def ws-out ws-out))
 
-;; (defn boot-ws []
-;;   (let [{:keys [ws-in ws-out]} (ws-chan)]
-;;     (def ws-in ws-in)
-;;     (def ws-out ws-out)))
-
 (defn mount-dom [dom]
-
   (if-let [app-dom (.getElementById js/document "app")]
     (r/render-component
      [dom]
