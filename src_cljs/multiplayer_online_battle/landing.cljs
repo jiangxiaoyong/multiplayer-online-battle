@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
-            [multiplayer-online-battle.utils :refer [mount-dom ws-in ws-out]]
+            [multiplayer-online-battle.comm :refer [ws-in ws-out]]
             [multiplayer-online-battle.game-loby :refer [game-loby]]
             [multiplayer-online-battle.states :refer [components-state]]))
 
@@ -42,9 +42,7 @@
                                       false)
                           :on-click #(do
                                        (go
-                                         (>! ws-out [:register-user/username {:username @input-val}]))
-                                       (.remove (.getElementById js/document "landing-pg"))
-                                       (mount-dom #'game-loby))}]]]]]]]]]]]])))
+                                         (>! ws-out [:register-user/username {:username @input-val}])))}]]]]]]]]]]]])))
 
 (defn landing []
   (r/create-class

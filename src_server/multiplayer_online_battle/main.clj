@@ -73,7 +73,8 @@
   [{:as ev-msg :keys [id ?data event]}]
   (log/info "TEST Event id:" id)
   (log/info "TEST Event data: " ?data)
-  (log/info "TEST Evnet event: " event))
+  (log/info "TEST Evnet event: " event)
+  (response/redirect "gameLobby.html"))
 
 ;;------------Set up Sente events router-------------
 (defonce event-router (atom nil))

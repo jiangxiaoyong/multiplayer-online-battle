@@ -3,19 +3,12 @@
   (:require [cljs.core.async :refer [<! >! chan close!]]
             [ajax.core :refer [GET POST]]
             [reagent.core :as r :refer [atom]]
-            [reagent.debug :refer [dbg log prn]]
-            [multiplayer-online-battle.comm :refer [ws-chan]]))
+            [reagent.debug :refer [dbg log prn]]))
 
 (enable-console-print!)
 
-(declare ws-in)
-(declare ws-out)
-
-(let [{:keys [ws-in ws-out]} (ws-chan)]
-    (def ws-in ws-in)
-    (def ws-out ws-out))
-
 (defn mount-dom [dom]
+  (log "mounting dom" dom)
   (if-let [app-dom (.getElementById js/document "app")]
     (r/render-component
      [dom]

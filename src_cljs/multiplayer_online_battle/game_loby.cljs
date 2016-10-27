@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
-            [multiplayer-online-battle.utils :refer [mount-dom ws-in ws-out]]
+            [multiplayer-online-battle.comm :refer [ws-in ws-out]]
             [multiplayer-online-battle.states :refer [components-state]]))
 
 (enable-console-print!)

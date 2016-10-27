@@ -7,25 +7,26 @@
 
 (enable-console-print!)
 
-(defn init-ws []
-  (let [{:keys [chsk ch-recv send-fn state] :as ch-map}
-        (sente/make-channel-socket! "/chsk" {:type :auto})]
-    (defonce ws-recv ch-recv)
-    (defonce ws-send send-fn)))
+(let [{:keys [chsk ch-recv send-fn state]}
+      (sente/make-channel-socket! "/chsk" ; Note the same path as before
+       {:type :auto ; e/o #{:auto :ajax :ws}
+       })]
+  (def chsk        chsk)
+  (def ch-recv    ch-recv) ; ChannelSocket's receive channel
+  (def send-fn   send-fn) ; ChannelSocket's send API fn
+  (def chsk-state state))
 
-(defn ws-chan []
-  (init-ws)
-  (let [ws-in (chan)
-        ws-out (chan)]
-    (go-loop []
-      (let [[msg ch] (alts! [ws-recv ws-out])]
-        (cond
-         (= ch ws-recv) (do
-                         (log "receiving msg: " msg)
-                         (>! ws-in msg))
-         (= ch ws-out) (do
-                         (log "sending msg: " msg)
-                         (ws-send msg))))
-      (recur))
-    {:ws-in ws-in
-     :ws-out ws-out}))
+(let [ws-out (chan)]
+  (go-loop []
+    (let [msg (<! ws-out)] 
+      (send-fn msg))
+    (recur))
+  (def ws-out ws-out))
+
+(let [ws-in (chan)]
+  (go-loop []
+    (let [msg (<! ch-recv)]
+      (>! ws-in msg))
+    (recur))
+  (def ws-in ws-in))
+
