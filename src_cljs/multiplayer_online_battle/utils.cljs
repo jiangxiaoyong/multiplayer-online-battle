@@ -8,19 +8,12 @@
 (enable-console-print!)
 
 (defn mount-dom [dom]
-  (log "mounting dom" dom)
   (if-let [app-dom (.getElementById js/document "app")]
     (r/render-component
      [dom]
      app-dom)))
 
 (defn ajax-call [fn url params] 
-  (let [out (chan)]
-    (fn url {:params params
-             :handler #(>! out %)
-             :error-handler #()
-             :format :json
-             :response-format :json})
-    out))
+  (fn url {:params params}))
 
 

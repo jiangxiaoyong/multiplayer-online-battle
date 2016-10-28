@@ -27,6 +27,7 @@
   (GET  "/chsk" req ((:ajax-get-or-ws-handshake-fn channel-socket) req))
   (POST "/chsk" req ((:ajax-post-fn channel-socket) req))
   (GET  "/status" req (str "Connected id: " (pr-str @ (:connected-uids channel-socket))))
+  (GET "/test" req (response/redirect "/new"))
   (route/resources "/")
   (route/not-found "<p> Page not found. </p>"))
 
@@ -65,16 +66,13 @@
 
 (defmethod event :test/game
   [{:as ev-msg :keys [id ?data event]}]
-  (log/info "TEST Event id:" id)
-  (log/info "TEST Event data: " ?data)
+  (log/info "ID!!! " (:id ev-msg))
+  (log/info "clint id !  "  (:client-id ev-msg))
   (log/info "TEST Evnet event: " event))
 
 (defmethod event :register-user/username
   [{:as ev-msg :keys [id ?data event]}]
-  (log/info "TEST Event id:" id)
-  (log/info "TEST Event data: " ?data)
-  (log/info "TEST Evnet event: " event)
-  (response/redirect "gameLobby.html"))
+  (log/info "TEST Evnet event: " event))
 
 ;;------------Set up Sente events router-------------
 (defonce event-router (atom nil))

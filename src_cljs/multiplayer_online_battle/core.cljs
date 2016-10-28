@@ -6,7 +6,8 @@
             [cljs.core.async :refer [<! >! put! take! chan close! timeout]]
             [multiplayer-online-battle.landing :refer [landing]]
             [multiplayer-online-battle.utils :refer [mount-dom]]
-            [multiplayer-online-battle.states :refer [components-state]]))
+            [multiplayer-online-battle.states :refer [components-state]]
+            [multiplayer-online-battle.comm :refer [start-comm disconnect reconnect]]))
 
 (enable-console-print!)
 
@@ -15,4 +16,5 @@
   (mount-dom #'landing))
 
 (defn ^:export run []
-  (mount-dom #'landing))
+  (mount-dom #'landing)
+  (start-comm))
