@@ -58,7 +58,7 @@
                            ;; Comment this out once it no longer serves you.
                            :open-urls ["http://localhost:8080/index.html"]}
 
-                :compiler {:main multiplayer-online-battle.core
+                :compiler {:main multiplayer-online-battle.game-lobby
                            :asset-path "js/compiled/out"
                            :output-to "resources/public/js/compiled/multiplayer_online_battle.js"
                            :output-dir "resources/public/js/compiled/out"

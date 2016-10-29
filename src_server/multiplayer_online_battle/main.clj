@@ -16,9 +16,25 @@
 
 (declare channel-socket)
 
+;;---------- Routing handlers--------------
+
 (defn home-pg-handler [_]
   (response/content-type 
    (response/resource-response "public/index.html")
+   "text/html"))
+
+(defn login-handler [req]
+  (let [{:keys [session params]} req
+        {:keys [user-name]} params]
+    (debugf "login params: %s " params)
+    (debugf "login session %s " session )
+    (debugf "login user name %s " user-name)
+    {:session (assoc session :uid user-name)}
+    ))
+
+(defn game-lobby-handler [req]
+  (response/content-type
+   (response/resource-response "public/gameLobby.html")
    "text/html"))
 
 ;;---------- Define routing ----------------
@@ -27,7 +43,8 @@
   (GET  "/chsk" req ((:ajax-get-or-ws-handshake-fn channel-socket) req))
   (POST "/chsk" req ((:ajax-post-fn channel-socket) req))
   (GET  "/status" req (str "Connected id: " (pr-str @ (:connected-uids channel-socket))))
-  (GET "/test" req (response/redirect "/new"))
+  (GET "/gamelobby" req (game-lobby-handler req))
+  (POST "/login" req (login-handler req))
   (route/resources "/")
   (route/not-found "<p> Page not found. </p>"))
 

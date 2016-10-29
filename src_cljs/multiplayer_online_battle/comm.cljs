@@ -11,14 +11,14 @@
 
 (let [{:keys [chsk ch-recv send-fn state]}
       (sente/make-channel-socket-client! "/chsk" ; Note the same path as before
-       {:type :auto ; e/o #{:auto :ajax :ws}
+       {:type :ws ; e/o #{:auto :ajax :ws}
        })]
   (def chsk        chsk)
   (def ch-recv    ch-recv) ; ChannelSocket's receive channel
   (def send-fn   send-fn) ; ChannelSocket's send API fn
   (def chsk-state state))
 
-;;;;;;;;;;;;;; Wrap websock with core.async channel
+;;;;;;;;;;;;;; Wrap websock with core.async channe
 
 (let [ws-out (chan)]
   (go-loop []

@@ -1,11 +1,12 @@
-(ns multiplayer-online-battle.game-loby
+(ns multiplayer-online-battle.game-lobby
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! >! chan close!]]
             [clojure.string :as str]
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [multiplayer-online-battle.comm :refer [ws-in ws-out]]
-            [multiplayer-online-battle.states :refer [components-state]]))
+            [multiplayer-online-battle.states :refer [components-state]]
+            [multiplayer-online-battle.utils :refer [mount-dom]]))
 
 (enable-console-print!)
 
@@ -58,10 +59,17 @@
           [:center
            [statusBtn]]]]]]]]))
 
-(defn game-loby []
+(defn game-lobby []
   (r/create-class
    {:componnet-will-mount (fn [_] (log "game loby will mount"))
     :component-did-mount (fn [_] (log "game loby did mount"))
     :component-will-unmount (fn [_] (log "game loby will unmount"))
     :reagent-render (fn []
                       [main ws-in ws-out])}))
+
+(defn fig-reload []
+  (.log js/console "figwheel reloaded! ")
+  (mount-dom #'game-lobby))
+
+(defn ^:export run []
+  (mount-dom #'game-lobby))

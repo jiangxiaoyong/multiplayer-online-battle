@@ -2,13 +2,18 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! >! chan close!]]
             [clojure.string :as str]
+            [ajax.core :refer [GET POST]]
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
-            [multiplayer-online-battle.comm :refer [ws-in ws-out]]
-            [multiplayer-online-battle.game-loby :refer [game-loby]]
+            [taoensso.sente  :as sente]
+            [multiplayer-online-battle.comm :refer [ws-in ws-out chsk-state]]
             [multiplayer-online-battle.states :refer [components-state]]))
 
 (enable-console-print!)
+
+(defn handler [res]
+  (log "server response " res)
+  (.assign js/window.location "/gamelobby"))
 
 (defn register-user-info [ws-out component-state]
   (let [input-val (r/atom "")]
@@ -40,9 +45,11 @@
                           :disabled (if (str/blank? @input-val)
                                       true
                                       false)
-                          :on-click #(do
-                                       (go
-                                         (>! ws-out [:register-user/username {:username @input-val}])))}]]]]]]]]]]]])))
+                          :on-click #(let [formdata (doto
+                                                      (js/FormData.)
+                                                      (.append "user-name" @input-val))]
+                                       (POST "/login" {:body formdata
+                                                       :handler handler}))}]]]]]]]]]]]])))
 
 (defn landing []
   (r/create-class
