@@ -29,8 +29,7 @@
     (debugf "login params: %s " params)
     (debugf "login session %s " session )
     (debugf "login user name %s " user-name)
-    {:session (assoc session :uid user-name)}
-    ))
+    {:status 200 :session (assoc session :uid user-name)}))
 
 (defn game-lobby-handler [req]
   (response/content-type
@@ -83,9 +82,11 @@
 
 (defmethod event :test/game
   [{:as ev-msg :keys [id ?data event]}]
-  (log/info "ID!!! " (:id ev-msg))
+  (log/info "uid:" (:uid ev-msg))
+  (log/info "id: " (:id ev-msg))
   (log/info "clint id !  "  (:client-id ev-msg))
-  (log/info "TEST Evnet event: " event))
+  (log/info "data" ?data)
+  (log/info "event " event))
 
 (defmethod event :register-user/username
   [{:as ev-msg :keys [id ?data event]}]
