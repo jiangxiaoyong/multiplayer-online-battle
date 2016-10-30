@@ -48,7 +48,7 @@
 
 (defn main [ch-in ch-out]
   (fn []
-    [:div.game-loby-container
+    [:div.game-loby-container.aa
      [:div.row
       [:div.col-lg-8
        [:div.main-box.clearfix
@@ -64,7 +64,7 @@
    {:componnet-will-mount (fn [_] (log "game loby will mount"))
     :component-did-mount (fn [_] (do
                                    (log "game loby did mount")
-                                   (reconnect)
+                                  ;; (reconnect)
                                    (go
                                      (>! ws-out [:test/game {:data "I am ..."}]))))
     :component-will-unmount (fn [_] (log "game loby will unmount"))
