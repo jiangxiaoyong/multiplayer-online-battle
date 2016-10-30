@@ -66,7 +66,7 @@
                                    (log "game loby did mount")
                                   ;; (reconnect)
                                    (go
-                                     (>! ws-out [:test/game {:data "I am ..."}]))))
+                                     (>! ws-out [:game-lobby/register {:data "I am ..."}]))))
     :component-will-unmount (fn [_] (log "game loby will unmount"))
     :reagent-render (fn []
                       [main ws-in ws-out])}))

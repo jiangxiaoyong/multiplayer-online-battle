@@ -10,7 +10,6 @@
   []
   (start-websocket)
   (start-events-router)
-  (start-web-server)
-  )
+  (start-web-server))
 
 (defn -main [& args] (start))
