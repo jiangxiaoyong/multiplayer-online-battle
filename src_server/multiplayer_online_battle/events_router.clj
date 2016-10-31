@@ -6,6 +6,8 @@
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.game-state :refer [players]]
+            [multiplayer-online-battle.synchronization :refer [synchronize-game-lobby]]
+            [multiplayer-online-battle.websocket :as ws]
             ))
 
 (defn have-player? [client-id]
@@ -21,19 +23,9 @@
   (log/info "client-id:" client-id)
   (log/info "data" ?data)
   (if (have-player? client-id)
-    (swap! players conj {:client-id client-id :user-name uid :status "Unready"})
-    (log/info "player already exist!")))
+    (log/info "player already exist!")
+    (swap! players conj {:client-id client-id :user-name uid :status "unready"})))
 
-;;------------Set up Sente Websockt-------------------
-(defn start-websocket []
-  (log/info "Starting websockt...")
-  (let [{:keys [ch-recv send-fn connected-uids
-                ajax-post-fn ajax-get-or-ws-handshake-fn]} (sente/make-channel-socket! sente-web-server-adapter)]
-    (def ch-recv ch-recv)
-    (def send-fn send-fn)
-    (def connected-uids connected-uids)
-    (def ajax-post-fn ajax-post-fn)
-    (def ajax-get-or-ws-handshake-fn ajax-get-or-ws-handshake-fn)))
 
 ;;----------- Sente events handler-------------
 (defmulti event :id)
@@ -56,6 +48,11 @@
   [{:as ev-msg}]
   (register-player ev-msg))
 
+(defmethod event :game-lobby/all-players-status
+  [{:as ev-msg}]
+  (log/info "start push all players status to client")
+  (synchronize-game-lobby))
+
 ;;------------Set up Sente events router-------------
 (defonce event-router (atom nil))
 
@@ -66,5 +63,5 @@
 (defn start-events-router []
   (log/info "Starting socket event router...")
   (stop-events-router)
-  (reset! event-router (sente/start-chsk-router! ch-recv event)))
+  (reset! event-router (sente/start-chsk-router! ws/ch-recv event)))
 

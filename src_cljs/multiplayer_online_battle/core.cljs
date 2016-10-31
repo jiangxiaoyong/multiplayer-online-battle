@@ -16,5 +16,4 @@
   (mount-dom #'landing))
 
 (defn ^:export run []
-  (mount-dom #'landing)
-  (start-comm))
+  (mount-dom #'landing))

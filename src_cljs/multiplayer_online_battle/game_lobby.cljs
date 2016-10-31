@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
-            [multiplayer-online-battle.comm :refer [ws-in ws-out reconnect]]
+            [multiplayer-online-battle.comm :refer [ws-in ws-out reconnect start-comm]]
             [multiplayer-online-battle.states :refer [components-state]]
             [multiplayer-online-battle.utils :refer [mount-dom]]))
 
@@ -64,9 +64,10 @@
    {:componnet-will-mount (fn [_] (log "game loby will mount"))
     :component-did-mount (fn [_] (do
                                    (log "game loby did mount")
-                                  ;; (reconnect)
+                                 ;;  (reconnect)
                                    (go
-                                     (>! ws-out [:game-lobby/register {:data "I am ..."}]))))
+                                     (>! ws-out [:game-lobby/register {:data "I am new player"}])
+                                     (>! ws-out [:game-lobby/all-players-status {:data "I want all players status"}]))))
     :component-will-unmount (fn [_] (log "game loby will unmount"))
     :reagent-render (fn []
                       [main ws-in ws-out])}))
@@ -76,4 +77,5 @@
   (mount-dom #'game-lobby))
 
 (defn ^:export run []
-  (mount-dom #'game-lobby))
+  (mount-dom #'game-lobby)
+  (start-comm))

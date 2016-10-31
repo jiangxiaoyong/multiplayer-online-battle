@@ -6,7 +6,6 @@
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.sente  :as sente]
-            [multiplayer-online-battle.comm :refer [ws-in ws-out chsk-state]]
             [multiplayer-online-battle.states :refer [components-state]]))
 
 (enable-console-print!)
@@ -15,7 +14,7 @@
   (log "server response " res)
   (.assign js/window.location "/gamelobby"))
 
-(defn register-user-info [ws-out component-state]
+(defn register-user-info [component-state]
   (let [input-val (r/atom "")]
     (fn []
       [:div#landing-pg.container {:class (get-in @component-state [:landing-pg :animate])}
@@ -60,6 +59,6 @@
     :component-will-unmount (fn [_]
                               (log "app component will Unmount"))
     :reagent-render (fn []
-                      [register-user-info ws-out components-state])}))
+                      [register-user-info components-state])}))
 
 

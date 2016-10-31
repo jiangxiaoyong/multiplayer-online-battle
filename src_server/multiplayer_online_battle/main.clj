@@ -2,7 +2,8 @@
   (:gen-class)
   (:require [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]]
-            [multiplayer-online-battle.events-router :refer [start-events-router start-websocket]]
+            [multiplayer-online-battle.websocket :refer [start-websocket]]
+            [multiplayer-online-battle.events-router :refer [start-events-router]]
             [multiplayer-online-battle.server :refer [start-web-server stop-web-server]]
             ))
 

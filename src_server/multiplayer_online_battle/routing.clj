@@ -9,7 +9,8 @@
                        [handler :refer [site]])
             [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]]
-            [multiplayer-online-battle.events-router :refer [ajax-get-or-ws-handshake-fn ajax-post-fn connected-uids]]
+            [multiplayer-online-battle.websocket :as ws]
+            [multiplayer-online-battle.synchronization :refer [synchronize-game-lobby]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             ))
 
@@ -36,9 +37,9 @@
 ;;---------- Define routing ----------------
 (defroutes all-routes
   (GET  "/"     req (home-pg-handler req))
-  (GET  "/chsk" req (ajax-get-or-ws-handshake-fn req))
-  (POST "/chsk" req (ajax-post-fn req))
-  (GET  "/status" req (str "Connected id: " (pr-str @connected-uids)))
+  (GET  "/chsk" req (ws/ajax-get-or-ws-handshake-fn req))
+  (POST "/chsk" req (ws/ajax-post-fn req))
+  (GET  "/status" req (str "Connected id: " (pr-str @ws/connected-uids)))
   (GET "/gamelobby" req (game-lobby-handler req))
   (POST "/login" req (login-handler req))
   (route/resources "/")

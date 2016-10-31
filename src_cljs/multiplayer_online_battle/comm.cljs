@@ -41,7 +41,7 @@
 (defmethod event-msg-handler :default
   [{:as ev-msg :keys [event]}]
   (infof  "unhandlered event: %s" event))
-
+  
 (defmethod event-msg-handler :chsk/state
   [{:as ev-msg :keys [?data]}]
   (let [[old-state-map new-state-map] ?data]
@@ -54,6 +54,14 @@
   (let [[?uid ?handshake-data] ?data]
     (infof "Handshake: %s " ?data)))
 
+(defmethod event-msg-handler :chsk/recv
+  [{:as ev-msg :keys [?data]}]
+  (debugf "Push event from server : %s" ?data))
+
+(defmethod event-msg-handler :game-lobby/players
+  [{:as ev-msg :keys [?data]}]
+  (debugf "All players:" ?data))
+
 ;;;;;;;;;;;;;;; Set up Sente event router
 
 (defonce ev-router (atom nil))
@@ -62,7 +70,7 @@
   (stop-ev-router)
   (log "Starting client ws event router !")
   (reset! ev-router
-    (sente/start-client-chsk-router!
+    (sente/start-chsk-router!
      ch-recv event-msg-handler)))
 
 ;;;;;;;;;;;;;;;; Sente utils
