@@ -27,12 +27,44 @@
     (recur))
   (def ws-out ws-out))
 
-(let [ws-in (chan)]
-  (go-loop []
-    (let [msg (<! ch-recv)]
-      (>! ws-in msg))
-    (recur))
-  (def ws-in ws-in))
+(defn game-lobby-ch []
+  (let [lobby-in (chan)
+        lobby-out (chan)
+        lobby-consume (chan)]
+    (go-loop []
+      (let [[val ch] (alts! [lobby-in lobby-out])]
+        (cond
+         (= ch lobby-in) (do
+                           (debugf "game lobby data to be consumed %s" (:data val))
+                           (>! lobby-consume (:data val)))
+         (= ch lobby-out) (do
+                            (debugf "game lobby sending data %s" val)
+                            (send-fn val))))
+      (recur))
+    (def lobby-consume lobby-consume)
+    (def lobby-out lobby-out)
+    [lobby-in]))
+
+;;;;;;;;;;;;; Set up Sente event handler
+(defn start-ev-router []
+  (let [[lobby-in] (game-lobby-ch)]
+    (go-loop []
+      (let [ev-msg (<! ch-recv)
+            {:as ev-msg :keys [id ?data]} ev-msg]
+        ;;(debugf "new receiving msg %s" ev-msg)
+        (cond
+         (= id :chsk/state) (let [[old-state-map new-state-map] ?data]
+                              (if (:first-open? new-state-map)
+                                (infof "Channel socket succuessfully established! %s" new-state-map)
+                                (infof "Channel socket state change: %s" new-state-map)))
+         (= id :chsk/handshake) (let [[?uid ?handshake-data] ?data]
+                                  (infof "Handshake: %s" ?data))
+         (= id :chsk/recv) (let [ev-type (first ?data)]
+                             (cond
+                              (= ev-type :game-lobby/players) (>! lobby-in (second ?data))
+                              :else "Unknow game event"))))
+      (recur))))
+
 
 ;;;;;;;;;;;;;;; Define Sente event handlers
 
@@ -55,23 +87,18 @@
     (infof "Handshake: %s " ?data)))
 
 (defmethod event-msg-handler :chsk/recv
-  [{:as ev-msg :keys [?data]}]
-  (debugf "Push event from server : %s" ?data))
-
-(defmethod event-msg-handler :game-lobby/players
-  [{:as ev-msg :keys [?data]}]
-  (debugf "All players:" ?data))
+  [{:as ev-msg :keys [?data]}])
 
 ;;;;;;;;;;;;;;; Set up Sente event router
 
-(defonce ev-router (atom nil))
-(defn stop-ev-router [] (when-let [stop-f @ev-router] (stop-f)))
-(defn start-ev-router []
-  (stop-ev-router)
-  (log "Starting client ws event router !")
-  (reset! ev-router
-    (sente/start-chsk-router!
-     ch-recv event-msg-handler)))
+;; (defonce ev-router (atom nil))
+;; (defn stop-ev-router [] (when-let [stop-f @ev-router] (stop-f)))
+;; (defn start-ev-router []
+;;   (stop-ev-router)
+;;   (log "Starting client ws event router !")
+;;   (reset! ev-router
+;;     (sente/start-chsk-router!
+;;      ch-recv event-msg-handler)))
 
 ;;;;;;;;;;;;;;;; Sente utils
 

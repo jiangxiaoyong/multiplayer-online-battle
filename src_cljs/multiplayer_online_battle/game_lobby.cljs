@@ -4,7 +4,8 @@
             [clojure.string :as str]
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
-            [multiplayer-online-battle.comm :refer [ws-in ws-out reconnect start-comm]]
+            [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
+            [multiplayer-online-battle.comm :refer [reconnect start-comm lobby-consume lobby-out]]
             [multiplayer-online-battle.states :refer [components-state]]
             [multiplayer-online-battle.utils :refer [mount-dom]]))
 
@@ -46,7 +47,7 @@
       [player-info1]
       [player-info2]]]))
 
-(defn main [ch-in ch-out]
+(defn main []
   (fn []
     [:div.game-loby-container.aa
      [:div.row
@@ -65,12 +66,15 @@
     :component-did-mount (fn [_] (do
                                    (log "game loby did mount")
                                  ;;  (reconnect)
-                                   (go
-                                     (>! ws-out [:game-lobby/register {:data "I am new player"}])
-                                     (>! ws-out [:game-lobby/all-players-status {:data "I want all players status"}]))))
+                                   (go-loop []
+                                     (let [data (<! lobby-consume)]
+                                       (debugf "just stest"))
+                                     ;;(>! ws-out [:game-lobby/register {:data "I am new player"}])
+                                     ;;(>! ws-out [:game-lobby/all-players-status {:data "I want all players status"}])
+                                     (recur))))
     :component-will-unmount (fn [_] (log "game loby will unmount"))
     :reagent-render (fn []
-                      [main ws-in ws-out])}))
+                      [main])}))
 
 (defn fig-reload []
   (.log js/console "figwheel reloaded! ")

@@ -14,7 +14,6 @@
   (let [broadcast
         (fn []
           (let [uids (:ws @ws/connected-uids)]
-            (debugf "Broadcasting game lobby %s uids" (count uids))
             (doseq [uid uids]
               (ws/send-fn uid
                 [:game-lobby/players
