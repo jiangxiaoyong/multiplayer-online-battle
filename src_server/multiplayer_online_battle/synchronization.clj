@@ -19,6 +19,6 @@
                 [:game-lobby/players
                  {:data @players}]))))]
     (go-loop []
-      (<! (async/timeout 100))
+      (<! (async/timeout 1000))
       (broadcast)
       (recur))))

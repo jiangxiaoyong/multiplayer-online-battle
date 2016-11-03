@@ -18,36 +18,13 @@
   (def send-fn   send-fn) ; ChannelSocket's send API fn
   (def chsk-state state))
 
-;;;;;;;;;;;;;; Wrap websock with core.async channe
-
-(let [ws-out (chan)]
-  (go-loop []
-    (let [msg (<! ws-out)] 
-      (send-fn msg))
-    (recur))
-  (def ws-out ws-out))
-
-(defn game-lobby-ch []
-  (let [lobby-in (chan)
-        lobby-out (chan)
-        lobby-consume (chan)]
-    (go-loop []
-      (let [[val ch] (alts! [lobby-in lobby-out])]
-        (cond
-         (= ch lobby-in) (do
-                           (debugf "game lobby data to be consumed %s" (:data val))
-                           (>! lobby-consume (:data val)))
-         (= ch lobby-out) (do
-                            (debugf "game lobby sending data %s" val)
-                            (send-fn val))))
-      (recur))
-    (def lobby-consume lobby-consume)
-    (def lobby-out lobby-out)
-    [lobby-in]))
+(declare ws->lobby)
+(declare ws->gaming)
 
 ;;;;;;;;;;;;; Set up Sente event handler
 (defn start-ev-router []
-  (let [[lobby-in] (game-lobby-ch)]
+  (let [ws->lobby (chan)
+        ws->gaming (chan)]
     (go-loop []
       (let [ev-msg (<! ch-recv)
             {:as ev-msg :keys [id ?data]} ev-msg]
@@ -61,33 +38,52 @@
                                   (infof "Handshake: %s" ?data))
          (= id :chsk/recv) (let [ev-type (first ?data)]
                              (cond
-                              (= ev-type :game-lobby/players) (>! lobby-in (second ?data))
+                              (= ev-type :game-lobby/players) (>! ws->lobby (second ?data))
+                              (= ev-type :gaming/play) (>! ws->gaming ?data)
                               :else "Unknow game event"))))
-      (recur))))
+      (recur))
+    {:ws->lobby ws->lobby
+     :ws->gaming ws->gaming}))
 
+;;;;;;;;;;;;;; Game lobby async channel
+
+(defn game-lobby-ch []
+  (let [game-lobby-in (chan)
+        game-lobby-out (chan)]
+    (go-loop []
+      (let [[data ch] (alts! [ws->lobby game-lobby-out])]
+        (cond
+         (= ch ws->lobby) (do
+                           (>! game-lobby-in (:data data)))
+         (= ch game-lobby-out) (do
+                            (debugf "game lobby sending data %s" data)
+                            (send-fn data))))
+      (recur))
+    {:game-lobby-in game-lobby-in
+     :game-lobby-out game-lobby-out}))
 
 ;;;;;;;;;;;;;;; Define Sente event handlers
 
-(defmulti event-msg-handler :id)
+;; (defmulti event-msg-handler :id)
 
-(defmethod event-msg-handler :default
-  [{:as ev-msg :keys [event]}]
-  (infof  "unhandlered event: %s" event))
+;; (defmethod event-msg-handler :default
+;;   [{:as ev-msg :keys [event]}]
+;;   (infof  "unhandlered event: %s" event))
   
-(defmethod event-msg-handler :chsk/state
-  [{:as ev-msg :keys [?data]}]
-  (let [[old-state-map new-state-map] ?data]
-    (if (:first-open? new-state-map)
-      (infof "Channel socket succuessfully established! %s" new-state-map)
-      (infof "Channel socket state change: %s" new-state-map))))
+;; (defmethod event-msg-handler :chsk/state
+;;   [{:as ev-msg :keys [?data]}]
+;;   (let [[old-state-map new-state-map] ?data]
+;;     (if (:first-open? new-state-map)
+;;       (infof "Channel socket succuessfully established! %s" new-state-map)
+;;       (infof "Channel socket state change: %s" new-state-map))))
 
-(defmethod event-msg-handler :chsk/handshake
-  [{:as ev-msg :keys [?data]}]
-  (let [[?uid ?handshake-data] ?data]
-    (infof "Handshake: %s " ?data)))
+;; (defmethod event-msg-handler :chsk/handshake
+;;   [{:as ev-msg :keys [?data]}]
+;;   (let [[?uid ?handshake-data] ?data]
+;;     (infof "Handshake: %s " ?data)))
 
-(defmethod event-msg-handler :chsk/recv
-  [{:as ev-msg :keys [?data]}])
+;; (defmethod event-msg-handler :chsk/recv
+;;   [{:as ev-msg :keys [?data]}])
 
 ;;;;;;;;;;;;;;; Set up Sente event router
 
@@ -111,4 +107,6 @@
   (sente/chsk-disconnect! chsk))
 
 (defn start-comm []
-  (start-ev-router))
+  (let [{:keys [ws->lobby ws->gaming]} (start-ev-router)]
+    (def ws->lobby ws->lobby)
+    (def ws->gaming ws->gaming)))

@@ -5,7 +5,7 @@
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.comm :refer [reconnect start-comm lobby-consume lobby-out]]
+            [multiplayer-online-battle.comm :refer [reconnect start-comm game-lobby-ch]]
             [multiplayer-online-battle.states :refer [components-state]]
             [multiplayer-online-battle.utils :refer [mount-dom]]))
 
@@ -47,7 +47,7 @@
       [player-info1]
       [player-info2]]]))
 
-(defn main []
+(defn main [game-lobby-in game-lobby-out]
   (fn []
     [:div.game-loby-container.aa
      [:div.row
@@ -61,20 +61,20 @@
            [statusBtn]]]]]]]]))
 
 (defn game-lobby []
-  (r/create-class
-   {:componnet-will-mount (fn [_] (log "game loby will mount"))
-    :component-did-mount (fn [_] (do
-                                   (log "game loby did mount")
-                                 ;;  (reconnect)
-                                   (go-loop []
-                                     (let [data (<! lobby-consume)]
-                                       (debugf "just stest"))
-                                     ;;(>! ws-out [:game-lobby/register {:data "I am new player"}])
-                                     ;;(>! ws-out [:game-lobby/all-players-status {:data "I want all players status"}])
-                                     (recur))))
-    :component-will-unmount (fn [_] (log "game loby will unmount"))
-    :reagent-render (fn []
-                      [main])}))
+  (let [{:keys [game-lobby-in game-lobby-out]} (game-lobby-ch)]
+    (r/create-class
+     {:componnet-will-mount (fn [_] 
+                              (go
+                                (>! game-lobby-out [:game-lobby/register {:data "I am new player"}])
+                                (>! game-lobby-out [:game-lobby/all-players-status {:data "I want all players status"}])))
+      :component-did-mount (fn [_] 
+                              (go-loop []
+                                (let [data (<! game-lobby-in)]
+                                  (debugf "in game lobby receiving msg %s" data))
+                                (recur))(log "game lobby did mount"))
+      :component-will-unmount (fn [_] (log "game loby will unmount"))
+      :reagent-render (fn []
+                        [main game-lobby-in game-lobby-out])})))
 
 (defn fig-reload []
   (.log js/console "figwheel reloaded! ")

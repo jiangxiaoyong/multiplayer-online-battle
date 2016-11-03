@@ -46,6 +46,7 @@
 
 (defmethod event :game-lobby/register
   [{:as ev-msg}]
+  (log/info "register player")
   (register-player ev-msg))
 
 (defmethod event :game-lobby/all-players-status
