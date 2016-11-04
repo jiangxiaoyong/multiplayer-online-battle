@@ -10,6 +10,15 @@
             [multiplayer-online-battle.websocket :as ws]
             ))
 
+
+;; Game Lobby events handler
+
+(defn fire-game-lobby-sync 
+  [key watched old new]
+  (log/info "fire lobby sync!!!")
+  (when-not (= old new)
+    (synchronize-game-lobby)))
+
 (defn have-player? [client-id]
   (some true?
    (for [player @players]
@@ -51,8 +60,8 @@
 
 (defmethod event :game-lobby/all-players-status
   [{:as ev-msg}]
-  (log/info "start push all players status to client")
-  (synchronize-game-lobby))
+  (log/info "start watching all players status")
+  (add-watch players :all-players-status fire-game-lobby-sync))
 
 ;;------------Set up Sente events router-------------
 (defonce event-router (atom nil))

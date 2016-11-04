@@ -8,17 +8,12 @@
             [multiplayer-online-battle.game-state :refer [players]]))
 
 ;;;;;;;;;;;; Frame Synchronization for game lobby
+
 (defn synchronize-game-lobby
-  "server->client async pushes, setup a loop to broadcast all players status to all connected players 10 times per second" 
+  "server->client async pushes, setup a loop to broadcast all players status to all connected players 10 times per second"
   []
-  (let [broadcast
-        (fn []
-          (let [uids (:ws @ws/connected-uids)]
-            (doseq [uid uids]
-              (ws/send-fn uid
-                [:game-lobby/players
-                 {:data @players}]))))]
-    (go-loop []
-      (<! (async/timeout 1000))
-      (broadcast)
-      (recur))))
+  (let [uids (:ws @ws/connected-uids)]
+    (doseq [uid uids]
+      (ws/send-fn uid
+        [:game-lobby/players
+         {:data @players}]))))

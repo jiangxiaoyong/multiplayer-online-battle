@@ -63,12 +63,13 @@
 (defn game-lobby []
   (let [{:keys [game-lobby-in game-lobby-out]} (game-lobby-ch)]
     (r/create-class
-     {:componnet-will-mount (fn [_] 
-                              (go
+     {:componnet-will-mount (fn [_]
+                              (log "game lobby will mount"))
+      :component-did-mount (fn [_]
+                             (go
                                 (>! game-lobby-out [:game-lobby/register {:data "I am new player"}])
-                                (>! game-lobby-out [:game-lobby/all-players-status {:data "I want all players status"}])))
-      :component-did-mount (fn [_] 
-                              (go-loop []
+                                (>! game-lobby-out [:game-lobby/all-players-status {:data "I want all players status"}])) 
+                             (go-loop []
                                 (let [data (<! game-lobby-in)]
                                   (debugf "in game lobby receiving msg %s" data))
                                 (recur))(log "game lobby did mount"))
