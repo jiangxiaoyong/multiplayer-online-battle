@@ -15,5 +15,5 @@
   (let [uids (:ws @ws/connected-uids)]
     (doseq [uid uids]
       (ws/send-fn uid
-        [:game-lobby/players
+        [:game-lobby/all-players
          {:data @players}]))))

@@ -27,7 +27,7 @@
         ws->gaming (chan)]
     (go-loop []
       (let [ev-msg (<! ch-recv)
-            {:as ev-msg :keys [id ?data]} ev-msg]
+            {:as evmsg :keys [id ?data]} ev-msg]
         ;;(debugf "new receiving msg %s" ev-msg)
         (cond
          (= id :chsk/state) (let [[old-state-map new-state-map] ?data]
@@ -38,7 +38,9 @@
                                   (infof "Handshake: %s" ?data))
          (= id :chsk/recv) (let [ev-type (first ?data)]
                              (cond
-                              (= ev-type :game-lobby/players) (>! ws->lobby (second ?data))
+                              (= ev-type :game-lobby/all-players) (>! ws->lobby (second ?data))
+                              (= ev-type :game-lobby/new-player) (>! ws->lobby (second ?data))
+                              (= ev-type :game-lobby/update-player) (>! ws->lobby (second ?data))
                               (= ev-type :gaming/play) (>! ws->gaming ?data)
                               :else "Unknow game event"))))
       (recur))

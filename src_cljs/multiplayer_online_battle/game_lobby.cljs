@@ -11,6 +11,8 @@
 
 (enable-console-print!)
 
+(def game-lobby-state (r/atom []))
+
 (defn player-info2 []
   (fn []
     [:tr
@@ -21,20 +23,20 @@
       [:h4
        [:span.label.label-success "ready"]]]]))
 
-(defn player-info1 []
+(defn player-info [{:keys [user-name status]}]
   (fn []
     [:tr
      [:td.user-info
       [:img {:src "http://bootdey.com/img/Content/avatar/avatar1.png"}]
-      [:div.user-name "ABC CDE"]]
+      [:div.user-name user-name]]
      [:td.text-center
       [:h4
-       [:span.label.label-default "Unready"]]]]))
+       [:span.label.label-default status]]]]))
 
 (defn statusBtn []
   [:button.btn.btn-success.btn-lg.btn-block "Ready"])
 
-(defn player-table []
+(defn players-table [game-lobby-in]
   (fn []
     [:table.table.user-list
      [:thead
@@ -44,8 +46,8 @@
        [:th.text-center
         [:span "Status"]]]]
      [:tbody
-      [player-info1]
-      [player-info2]]]))
+      (for [player @game-lobby-state]
+        [player-info player])]]))
 
 (defn main [game-lobby-in game-lobby-out]
   (fn []
@@ -55,10 +57,14 @@
        [:div.main-box.clearfix
         [:div.table-responsive
          [:div.game-loby-title "Game lobby"]
-         [player-table]
+         [players-table]
          [:div
           [:center
            [statusBtn]]]]]]]]))
+
+(defn handle-sync [data]
+  (debugf "handle-sync %s" data)
+  (reset! game-lobby-state data))
 
 (defn game-lobby []
   (let [{:keys [game-lobby-in game-lobby-out]} (game-lobby-ch)]
@@ -71,7 +77,8 @@
                                 (>! game-lobby-out [:game-lobby/all-players-status {:data "I want all players status"}])) 
                              (go-loop []
                                 (let [data (<! game-lobby-in)]
-                                  (debugf "in game lobby receiving msg %s" data))
+                                  (debugf "in game lobby receiving msg %s" data)
+                                  (handle-sync data))
                                 (recur))(log "game lobby did mount"))
       :component-will-unmount (fn [_] (log "game loby will unmount"))
       :reagent-render (fn []
