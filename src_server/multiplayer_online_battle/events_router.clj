@@ -2,6 +2,7 @@
   (:gen-class)
   (:require [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]]
+            [clojure.data :refer [diff]]
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
@@ -13,16 +14,28 @@
 
 ;; Game Lobby events handler
 
+(defn check-game-lobby-state [old new]
+  (cond
+   (> (count new) (count old)) {:ev-type :game-lobby/player-come
+                                :player (first (filter identity (second (diff old new))))}
+   (< (count new) (count old)) {:ev-type :game-looby/player-leave
+                                :player (first (filter identity (first (diff old new))))}
+   (= (count new) (count old)) {:ev-type :game-lobby/player-update
+                                :player (first (filter identity (second (diff old new))))}))
+
 (defn fire-game-lobby-sync 
   [key watched old new]
-  (log/info "fire lobby sync!!!")
   (when-not (= old new)
-    (synchronize-game-lobby)))
+    (log/info "fire lobby sync!!!")
+    (log/info "old === " old)
+    (log/info "new === " new)
+    (let [{:keys [ev-type player]} (check-game-lobby-state old new)]
+      (synchronize-game-lobby ev-type player))))
 
-(defn have-player? [client-id]
+(defn have-player? [user-name]
   (some true?
    (for [player @players]
-      (if (= client-id (get-in player [:client-id]))
+      (if (= user-name (get-in player [:user-name]))
         true
         false))))
 
@@ -31,7 +44,7 @@
   (log/info "uid:" uid)
   (log/info "client-id:" client-id)
   (log/info "data" ?data)
-  (if (have-player? client-id)
+  (if (have-player? uid)
     (log/info "player already exist!")
     (swap! players conj {:client-id client-id :user-name uid :status "unready"})))
 
@@ -56,12 +69,13 @@
 (defmethod event :game-lobby/register
   [{:as ev-msg}]
   (log/info "register player")
-  (register-player ev-msg))
+  (register-player ev-msg)
+  (add-watch players :lobby-state fire-game-lobby-sync))
 
-(defmethod event :game-lobby/all-players-status
+(defmethod event :game-lobby/lobby-state?
   [{:as ev-msg}]
   (log/info "start watching all players status")
-  (add-watch players :all-players-status fire-game-lobby-sync))
+  (synchronize-game-lobby :game-lobby/players-all @players))
 
 ;;------------Set up Sente events router-------------
 (defonce event-router (atom nil))

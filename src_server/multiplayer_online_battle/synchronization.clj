@@ -11,9 +11,17 @@
 
 (defn synchronize-game-lobby
   "server->client async pushes, setup a loop to broadcast all players status to all connected players 10 times per second"
-  []
-  (let [uids (:ws @ws/connected-uids)]
-    (doseq [uid uids]
-      (ws/send-fn uid
-        [:game-lobby/all-players
-         {:data @players}]))))
+  [ev-type player]
+  (let [broadcast (fn [payload]
+                    (let [uids (:ws @ws/connected-uids)]
+                      (doseq [uid uids]
+                        (ws/send-fn uid
+                                    [ev-type
+                                     {:data payload}]))))]
+    (cond
+     (= ev-type :game-lobby/player-come) (do
+                                           (log/info "new join play" player)
+                                           (broadcast player))
+     (= ev-type :game-looby/player-leave) (broadcast player)
+     (= ev-type :game-lobby/player-update) (broadcast player)
+     (= ev-type :game-lobby/players-all) (broadcast player))))

@@ -37,10 +37,12 @@
          (= id :chsk/handshake) (let [[?uid ?handshake-data] ?data]
                                   (infof "Handshake: %s" ?data))
          (= id :chsk/recv) (let [ev-type (first ?data)]
+                             (debugf "complete data in comm %s" ?data)
                              (cond
-                              (= ev-type :game-lobby/all-players) (>! ws->lobby (second ?data))
-                              (= ev-type :game-lobby/new-player) (>! ws->lobby (second ?data))
-                              (= ev-type :game-lobby/update-player) (>! ws->lobby (second ?data))
+                              (= ev-type :game-lobby/players-all) (>! ws->lobby (second ?data))
+                              (= ev-type :game-lobby/player-come) (>! ws->lobby (second ?data))
+                              (= ev-type :game-lobby/player-leave) (>! ws->lobby (second ?data))
+                              (= ev-type :game-lobby/player-update) (>! ws->lobby (second ?data))
                               (= ev-type :gaming/play) (>! ws->gaming ?data)
                               :else "Unknow game event"))))
       (recur))
@@ -56,9 +58,10 @@
       (let [[data ch] (alts! [ws->lobby game-lobby-out])]
         (cond
          (= ch ws->lobby) (do
-                           (>! game-lobby-in (:data data)))
+                            (infof "game lobby receiving %s" data)
+                            (>! game-lobby-in (:data data)))
          (= ch game-lobby-out) (do
-                            (debugf "game lobby sending data %s" data)
+                            (infof "game lobby sending data %s" data)
                             (send-fn data))))
       (recur))
     {:game-lobby-in game-lobby-in
