@@ -19,9 +19,6 @@
                                     [ev-type
                                      {:data payload}]))))]
     (cond
-     (= ev-type :game-lobby/player-come) (do
-                                           (log/info "new join play" player)
-                                           (broadcast player))
+     (= ev-type :game-lobby/player-come) (broadcast player)
      (= ev-type :game-looby/player-leave) (broadcast player)
-     (= ev-type :game-lobby/player-update) (broadcast player)
-     (= ev-type :game-lobby/players-all) (broadcast player))))
+     (= ev-type :game-lobby/player-update) (broadcast player))))

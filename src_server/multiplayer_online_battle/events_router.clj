@@ -73,9 +73,8 @@
   (add-watch players :lobby-state fire-game-lobby-sync))
 
 (defmethod event :game-lobby/lobby-state?
-  [{:as ev-msg}]
-  (log/info "start watching all players status")
-  (synchronize-game-lobby :game-lobby/players-all @players))
+  [{:as ev-msg :keys [uid]}]
+  (ws/send-fn uid [:game-lobby/players-all {:data @players}]))
 
 ;;------------Set up Sente events router-------------
 (defonce event-router (atom nil))

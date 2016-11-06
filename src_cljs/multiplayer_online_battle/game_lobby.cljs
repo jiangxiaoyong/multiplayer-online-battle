@@ -63,7 +63,6 @@
            [statusBtn]]]]]]]]))
 
 (defn handle-sync [data]
-  (debugf "handle-sync")
   (reset! game-lobby-state data))
 
 (defn game-lobby []
@@ -77,7 +76,6 @@
                                 (>! game-lobby-out [:game-lobby/lobby-state? {:data "I want all players status"}])) 
                              (go-loop []
                                 (let [data (<! game-lobby-in)]
-                                  (debugf "in game lobby receiving msg %s" data)
                                   (handle-sync data))
                                 (recur))(log "game lobby did mount"))
       :component-will-unmount (fn [_] (log "game loby will unmount"))
