@@ -13,6 +13,13 @@
 
 (def game-lobby-state (r/atom []))
 
+(defn handle-ev-msg [ev-msg]
+  (let [ev-type (first ev-msg)
+        payload (:data (second ev-msg))]
+    (cond
+     (= :game-lobby/players-all ev-type) (reset! game-lobby-state payload)
+     (= :game-lobby/player-come ev-type) (swap! game-lobby-state conj payload))))
+
 (defn player-info2 []
   (fn []
     [:tr
@@ -47,7 +54,7 @@
         [:span "Status"]]]]
      [:tbody
       (for [player @game-lobby-state]
-        [player-info player])]]))
+        ^{:key (:client-id player)} [player-info player])]]))
 
 (defn main [game-lobby-in game-lobby-out]
   (fn []
@@ -62,9 +69,6 @@
           [:center
            [statusBtn]]]]]]]]))
 
-(defn handle-sync [data]
-  (reset! game-lobby-state data))
-
 (defn game-lobby []
   (let [{:keys [game-lobby-in game-lobby-out]} (game-lobby-ch)]
     (r/create-class
@@ -75,8 +79,9 @@
                                 (>! game-lobby-out [:game-lobby/register {:data "I am new player"}])
                                 (>! game-lobby-out [:game-lobby/lobby-state? {:data "I want all players status"}])) 
                              (go-loop []
-                                (let [data (<! game-lobby-in)]
-                                  (debugf "game looby receiving: %s" data))
+                                (let [ev-msg (<! game-lobby-in)]
+                                  (debugf "game looby receiving: %s" ev-msg)
+                                  (handle-ev-msg ev-msg))
                                 (recur))(log "game lobby did mount"))
       :component-will-unmount (fn [_] (log "game loby will unmount"))
       :reagent-render (fn []
