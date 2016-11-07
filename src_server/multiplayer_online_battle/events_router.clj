@@ -71,8 +71,8 @@
 (defmethod event :game-lobby/register
   [{:as ev-msg}]
   (log/info "register player")
-  (register-player ev-msg)
   (return-player-info ev-msg)
+  (register-player ev-msg)
   (add-watch players :lobby-state fire-game-lobby-sync))
 
 (defmethod event :game-lobby/lobby-state?

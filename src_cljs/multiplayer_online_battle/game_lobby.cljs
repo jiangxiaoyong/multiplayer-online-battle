@@ -13,12 +13,17 @@
 
 (def game-lobby-state (r/atom {}))
 
+(defn me? [{:keys [:user-name]}]
+  (if (= user-name (:user-name (:player-current @game-lobby-state)))
+    true
+    false))
+
 (defn handle-ev-msg [ev-msg]
   (let [ev-type (first ev-msg)
         payload (:payload (second ev-msg))]
     (cond
      (= :game-lobby/players-all ev-type) (swap! game-lobby-state assoc :players-all payload)
-     (= :game-lobby/player-come ev-type) (swap! game-lobby-state update-in [:players-all] conj payload)
+     (= :game-lobby/player-come ev-type) (if-not (me? payload) (swap! game-lobby-state update-in [:players-all] conj payload))
      (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload))))
 
 (defn player-info2 []
