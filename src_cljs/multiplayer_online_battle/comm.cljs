@@ -1,6 +1,7 @@
 (ns multiplayer-online-battle.comm
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! >! put! take! chan close! alts! timeout]]
+            [clojure.string :as str]
             [taoensso.sente  :as sente :refer (cb-success?)]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [reagent.debug :refer [dbg log prn]]))
@@ -22,13 +23,20 @@
 (declare ws->gaming)
 
 ;;;;;;;;;;;;; Set up Sente event handler
+(defn where-to-route? [ev-type]
+  (let [where? (fn [ev] 
+                            (keyword (namespace ev)))]
+    (cond
+     (= :game-lobby (where? ev-type)) :game-lobby
+     (= :gaming (where? ev-type)) :gaming
+     :else :unknow)))
+
 (defn start-ev-router []
   (let [ws->lobby (chan)
         ws->gaming (chan)]
     (go-loop []
       (let [ev-msg (<! ch-recv)
             {:as evmsg :keys [id ?data]} ev-msg]
-        ;;(debugf "new receiving msg %s" ev-msg)
         (cond
          (= id :chsk/state) (let [[old-state-map new-state-map] ?data]
                               (if (:first-open? new-state-map)
@@ -36,14 +44,12 @@
                                 (infof "Channel socket state change: %s" new-state-map)))
          (= id :chsk/handshake) (let [[?uid ?handshake-data] ?data]
                                   (infof "Handshake: %s" ?data))
-         (= id :chsk/recv) (let [ev-type (first ?data)]
+         (= id :chsk/recv) (let [ev-type (first ?data)
+                                 route-to (where-to-route? ev-type)]
                              (debugf "complete data in comm %s" ?data)
                              (cond
-                              (= ev-type :game-lobby/players-all) (>! ws->lobby (second ?data))
-                              (= ev-type :game-lobby/player-come) (>! ws->lobby (second ?data))
-                              (= ev-type :game-lobby/player-leave) (>! ws->lobby (second ?data))
-                              (= ev-type :game-lobby/player-update) (>! ws->lobby (second ?data))
-                              (= ev-type :gaming/play) (>! ws->gaming ?data)
+                              (= route-to :game-lobby) (>! ws->lobby ?data)
+                              (= route-to :gaming/play) (>! ws->gaming ?data)
                               :else "Unknow game event"))))
       (recur))
     {:ws->lobby ws->lobby
@@ -58,10 +64,10 @@
       (let [[data ch] (alts! [ws->lobby game-lobby-out])]
         (cond
          (= ch ws->lobby) (do
-                            (infof "game lobby receiving %s" data)
-                            (>! game-lobby-in (:data data)))
+                            (infof "game lobby channel receiving %s" data)
+                            (>! game-lobby-in data))
          (= ch game-lobby-out) (do
-                            (infof "game lobby sending data %s" data)
+                            (infof "game lobby channel sending data %s" data)
                             (send-fn data))))
       (recur))
     {:game-lobby-in game-lobby-in

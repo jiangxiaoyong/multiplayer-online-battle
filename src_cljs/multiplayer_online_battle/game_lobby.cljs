@@ -76,7 +76,7 @@
                                 (>! game-lobby-out [:game-lobby/lobby-state? {:data "I want all players status"}])) 
                              (go-loop []
                                 (let [data (<! game-lobby-in)]
-                                  (handle-sync data))
+                                  (debugf "game looby receiving: %s" data))
                                 (recur))(log "game lobby did mount"))
       :component-will-unmount (fn [_] (log "game loby will unmount"))
       :reagent-render (fn []
