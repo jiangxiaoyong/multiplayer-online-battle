@@ -11,14 +11,15 @@
 
 (enable-console-print!)
 
-(def game-lobby-state (r/atom []))
+(def game-lobby-state (r/atom {}))
 
 (defn handle-ev-msg [ev-msg]
   (let [ev-type (first ev-msg)
-        payload (:data (second ev-msg))]
+        payload (:payload (second ev-msg))]
     (cond
-     (= :game-lobby/players-all ev-type) (reset! game-lobby-state payload)
-     (= :game-lobby/player-come ev-type) (swap! game-lobby-state conj payload))))
+     (= :game-lobby/players-all ev-type) (swap! game-lobby-state assoc :players-all payload)
+     (= :game-lobby/player-come ev-type) (swap! game-lobby-state update-in [:players-all] conj payload)
+     (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload))))
 
 (defn player-info2 []
   (fn []
@@ -53,7 +54,7 @@
        [:th.text-center
         [:span "Status"]]]]
      [:tbody
-      (for [player @game-lobby-state]
+      (for [player (:players-all @game-lobby-state)]
         ^{:key (:client-id player)} [player-info player])]]))
 
 (defn main [game-lobby-in game-lobby-out]
@@ -76,8 +77,8 @@
                               (log "game lobby will mount"))
       :component-did-mount (fn [_]
                              (go
-                                (>! game-lobby-out [:game-lobby/register {:data "I am new player"}])
-                                (>! game-lobby-out [:game-lobby/lobby-state? {:data "I want all players status"}])) 
+                                (>! game-lobby-out [:game-lobby/register {:payload "I am new player"}])
+                                (>! game-lobby-out [:game-lobby/lobby-state? {:payload "I want all players status"}])) 
                              (go-loop []
                                 (let [ev-msg (<! game-lobby-in)]
                                   (debugf "game looby receiving: %s" ev-msg)

@@ -17,7 +17,7 @@
                       (doseq [uid uids]
                         (ws/send-fn uid
                                     [ev-type
-                                     {:data payload}]))))]
+                                     {:payload payload}]))))]
     (cond
      (= ev-type :game-lobby/player-come) (broadcast player)
      (= ev-type :game-looby/player-leave) (broadcast player)
