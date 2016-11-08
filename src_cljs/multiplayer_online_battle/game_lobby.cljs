@@ -24,17 +24,8 @@
     (cond
      (= :game-lobby/players-all ev-type) (swap! game-lobby-state assoc :players-all payload)
      (= :game-lobby/player-come ev-type) (if-not (me? payload) (swap! game-lobby-state update-in [:players-all] conj payload))
-     (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload))))
-
-(defn player-info2 []
-  (fn []
-    [:tr
-     [:td.user-info
-      [:img {:src "http://bootdey.com/img/Content/avatar/avatar2.png"}]
-      [:div.user-name "ddd bbb"]]
-     [:td.text-center
-      [:h4
-       [:span.label.label-success "ready"]]]]))
+     (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload)
+     (= :game-lobby/player-update ev-type) (debugf "going to update player status"))))
 
 (defn player-info [{:keys [user-name status]}]
   (fn []
@@ -46,10 +37,10 @@
       [:h4
        [:span.label.label-default status]]]]))
 
-(defn statusBtn []
-  [:button.btn.btn-success.btn-lg.btn-block "Ready"])
+(defn statusBtn [game-lobby-out]
+  [:button.btn.btn-success.btn-lg.btn-block {:on-click #(go (>! game-lobby-out [:game-lobby/player-ready {:payload (:player-current @game-lobby-state)}]))} "Ready"])
 
-(defn players-table [game-lobby-in]
+(defn players-table []
   (fn []
     [:table.table.user-list
      [:thead
@@ -73,7 +64,7 @@
          [players-table]
          [:div
           [:center
-           [statusBtn]]]]]]]]))
+           [statusBtn game-lobby-out]]]]]]]]))
 
 (defn game-lobby []
   (let [{:keys [game-lobby-in game-lobby-out]} (game-lobby-ch)]

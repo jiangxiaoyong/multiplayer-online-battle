@@ -49,7 +49,7 @@
     (swap! players conj {:client-id client-id :user-name uid :status "unready"})))
 
 (defn return-player-info [{:as ev-msg :keys [uid client-id]}]
-  (ws/send-fn uid [:game-lobby/player-current {:payload {:client-id client-id :user-name uid}}]))
+  (ws/send-fn uid [:game-lobby/player-current {:payload {:client-id client-id :user-name uid :status "unready"}}]))
 
 ;;----------- Sente events handler-------------
 (defmulti event :id)
@@ -79,6 +79,15 @@
   [{:as ev-msg :keys [uid]}]
   (ws/send-fn uid [:game-lobby/players-all {:payload @players}]))
 
+(defmethod event :game-lobby/player-ready
+  [{:as ev-msg :keys [uid ?data]}]
+  (log/info "player %s is ready now!" uid)
+  (log/info "ready plaers payload %s" ?data)
+  (let [index (.indexOf @players (:payload ?data))]
+    (log/info "index of player %s" index)
+    (swap! players assoc-in [index :status] "ready")
+    ))
+
 ;;------------Set up Sente events router-------------
 (defonce event-router (atom nil))
 
@@ -90,4 +99,3 @@
   (log/info "Starting socket event router...")
   (stop-events-router)
   (reset! event-router (sente/start-chsk-router! ws/ch-recv event)))
-
