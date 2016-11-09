@@ -17,11 +17,11 @@
 (defn check-game-lobby-state [old new]
   (cond
    (> (count new) (count old)) {:ev-type :game-lobby/player-come
-                                :player (first (filter identity (second (diff old new))))}
+                                :player (apply hash-map (first (filter identity (second (diff old new)))))}
    (< (count new) (count old)) {:ev-type :game-looby/player-leave
-                                :player (first (filter identity (first (diff old new))))}
+                                :player (apply hash-map (first (filter identity (first (diff old new)))))}
    (= (count new) (count old)) {:ev-type :game-lobby/player-update
-                                :player (first (filter identity (second (diff old new))))}))
+                                :player (apply hash-map (first (filter identity (second (diff old new)))))}))
 
 (defn fire-game-lobby-sync 
   [key watched old new]
@@ -32,24 +32,24 @@
     (let [{:keys [ev-type player]} (check-game-lobby-state old new)]
       (synchronize-game-lobby ev-type player))))
 
-(defn have-player? [user-name]
-  (some true?
-   (for [player @players]
-      (if (= user-name (get-in player [:user-name]))
-        true
-        false))))
+;; (defn have-player? [user-name]
+;;   (some true?
+;;    (for [player @players]
+;;       (if (= user-name (get-in player [:user-name]))
+;;         true
+;;         false))))
 
 (defn register-player [{:as ev-msg :keys [id uid client-id ?data]}]
   (log/info "id:" id)
   (log/info "uid:" uid)
   (log/info "client-id:" client-id)
   (log/info "data" ?data)
-  (if (have-player? uid)
+  (if (contains? @players (keyword uid))
     (log/info "player already exist!")
-    (swap! players conj {:client-id client-id :user-name uid :status "unready"})))
+    (swap! players conj {(keyword uid) {:client-id client-id :user-name uid :status "unready"}})))
 
 (defn return-player-info [{:as ev-msg :keys [uid client-id]}]
-  (ws/send-fn uid [:game-lobby/player-current {:payload {:client-id client-id :user-name uid :status "unready"}}]))
+  (ws/send-fn uid [:game-lobby/player-current {:payload {(keyword uid) {:client-id client-id :user-name uid :status "unready"}}}]))
 
 ;;----------- Sente events handler-------------
 (defmulti event :id)
@@ -80,13 +80,11 @@
   (ws/send-fn uid [:game-lobby/players-all {:payload @players}]))
 
 (defmethod event :game-lobby/player-ready
-  [{:as ev-msg :keys [uid ?data]}]
+  [{:as ev-msg :keys [client-id uid ?data]}]
   (log/info "player %s is ready now!" uid)
-  (log/info "ready plaers payload %s" ?data)
+  (log/info "ready plaers payload %s" ev-msg)
   (let [index (.indexOf @players (:payload ?data))]
-    (log/info "index of player %s" index)
-    (swap! players assoc-in [index :status] "ready")
-    ))
+    (swap! players assoc-in [index :status] "ready")))
 
 ;;------------Set up Sente events router-------------
 (defonce event-router (atom nil))

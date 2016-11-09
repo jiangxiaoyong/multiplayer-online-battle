@@ -13,8 +13,8 @@
 
 (def game-lobby-state (r/atom {}))
 
-(defn me? [{:keys [:user-name]}]
-  (if (= user-name (:user-name (:player-current @game-lobby-state)))
+(defn me? [{:keys [:user-name] :as msg}]
+  (if (= user-name (:user-name (first (vals (:player-current @game-lobby-state)))))
     true
     false))
 
@@ -23,7 +23,7 @@
         payload (:payload (second ev-msg))]
     (cond
      (= :game-lobby/players-all ev-type) (swap! game-lobby-state assoc :players-all payload)
-     (= :game-lobby/player-come ev-type) (if-not (me? payload) (swap! game-lobby-state update-in [:players-all] conj payload))
+     (= :game-lobby/player-come ev-type) (if-not (me? (first (vals payload))) (swap! game-lobby-state update-in [:players-all] conj payload))
      (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload)
      (= :game-lobby/player-update ev-type) (debugf "going to update player status"))))
 
@@ -50,7 +50,7 @@
        [:th.text-center
         [:span "Status"]]]]
      [:tbody
-      (for [player (:players-all @game-lobby-state)]
+      (for [player (vals (:players-all @game-lobby-state))]
         ^{:key (:client-id player)} [player-info player])]]))
 
 (defn main [game-lobby-in game-lobby-out]
