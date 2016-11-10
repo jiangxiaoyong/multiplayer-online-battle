@@ -46,10 +46,10 @@
   (log/info "data" ?data)
   (if (contains? @players (keyword uid))
     (log/info "player already exist!")
-    (swap! players conj {(keyword uid) {:client-id client-id :user-name uid :status "unready"}})))
+    (swap! players conj {(keyword uid) {:client-id client-id :user-name uid :status false}})))
 
 (defn return-player-info [{:as ev-msg :keys [uid client-id]}]
-  (ws/send-fn uid [:game-lobby/player-current {:payload {(keyword uid) {:client-id client-id :user-name uid :status "unready"}}}]))
+  (ws/send-fn uid [:game-lobby/player-current {:payload {(keyword uid) {:client-id client-id :user-name uid :status false}}}]))
 
 ;;----------- Sente events handler-------------
 (defmulti event :id)
@@ -82,9 +82,7 @@
 (defmethod event :game-lobby/player-ready
   [{:as ev-msg :keys [client-id uid ?data]}]
   (log/info "player %s is ready now!" uid)
-  (log/info "ready plaers payload %s" ev-msg)
-  (let [index (.indexOf @players (:payload ?data))]
-    (swap! players assoc-in [index :status] "ready")))
+  (swap! players assoc-in [(keyword uid) :status] true))
 
 ;;------------Set up Sente events router-------------
 (defonce event-router (atom nil))

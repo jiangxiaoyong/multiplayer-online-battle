@@ -20,25 +20,33 @@
 
 (defn handle-ev-msg [ev-msg]
   (let [ev-type (first ev-msg)
-        payload (:payload (second ev-msg))]
+        payload (:payload (second ev-msg))
+        who (first (keys payload))]
     (cond
      (= :game-lobby/players-all ev-type) (swap! game-lobby-state assoc :players-all payload)
      (= :game-lobby/player-come ev-type) (if-not (me? (first (vals payload))) (swap! game-lobby-state update-in [:players-all] conj payload))
      (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload)
-     (= :game-lobby/player-update ev-type) (debugf "going to update player status"))))
+     (= :game-lobby/player-update ev-type) (swap! game-lobby-state update-in [:players-all who :status] not))))
 
-(defn player-info [{:keys [user-name status]}]
-  (fn []
+(defn player-info []
+  (fn [{:keys [user-name status]}]
     [:tr
      [:td.user-info
       [:img {:src "http://bootdey.com/img/Content/avatar/avatar1.png"}]
       [:div.user-name user-name]]
      [:td.text-center
       [:h4
-       [:span.label.label-default status]]]]))
+       [:span {:class (if status "label label-success" "label label-default")} (if status "ready" "unready")]]]]))
 
 (defn statusBtn [game-lobby-out]
-  [:button.btn.btn-success.btn-lg.btn-block {:on-click #(go (>! game-lobby-out [:game-lobby/player-ready {:payload (:player-current @game-lobby-state)}]))} "Ready"])
+  (fn []
+    (let [myself (first (keys (:player-current @game-lobby-state)))
+          ready? (:status (first (vals (:player-current @game-lobby-state))))]
+      [:button {:class (if ready? "btn btn-lg btn-info btn-block" "btn btn-success btn-lg btn-block")
+                :on-click #(do 
+                             (swap! game-lobby-state update-in [:player-current myself :status] not)
+                             (go (>! game-lobby-out [:game-lobby/player-ready {:payload (:player-current @game-lobby-state)}])))}
+       [:sapn {:class (if ready? "glyphicon glyphicon-refresh spinning")}] (if ready? "Waiting" "Ready")])))
 
 (defn players-table []
   (fn []
@@ -49,7 +57,7 @@
         [:span "User"]]
        [:th.text-center
         [:span "Status"]]]]
-     [:tbody
+     [:tbody      
       (for [player (vals (:players-all @game-lobby-state))]
         ^{:key (:client-id player)} [player-info player])]]))
 
