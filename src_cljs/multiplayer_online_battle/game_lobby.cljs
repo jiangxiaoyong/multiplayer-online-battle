@@ -39,8 +39,8 @@
        [:span {:class (if ready? (get-in @components-state [:game-lobby :player-ready-label]) (get-in @components-state [:game-lobby :player-unready-label]))} (if ready? "ready" "unready")]]]]))
 
 (defn statusBtn []
-  (fn [game-lobby-out ready?]
-    (let [myself (keyword (:user-name (:player-current @game-lobby-state)))]
+  (fn [game-lobby-out]
+    (let [ready? (:ready? (:player-current @game-lobby-state))]
       (debugf "current state %s" ready?)
       [:button {:class (if ready? "btn btn-lg btn-info btn-block" "btn btn-success btn-lg btn-block")
                 :on-click #(do 
@@ -72,8 +72,8 @@
          [players-table]
          [:div
           [:center
-           (let [ready? (:ready? (:player-current @game-lobby-state))]
-             [statusBtn game-lobby-out ready?])]]]]]]]))
+;;           (let [ready?]) (:ready? (:player-current @game-lobby-state))
+           [statusBtn game-lobby-out]]]]]]]]))
 
 (defn game-lobby []
   (let [{:keys [game-lobby-in game-lobby-out]} (game-lobby-ch)]
@@ -82,13 +82,13 @@
                               (log "game lobby will mount"))
       :component-did-mount (fn [_]
                              (go
-                                (>! game-lobby-out [:game-lobby/register {:payload "I am new player"}])
-                                (>! game-lobby-out [:game-lobby/lobby-state? {:payload "I want all players status"}])) 
+                               (>! game-lobby-out [:game-lobby/register {:payload "I am new player"}])
+                               (>! game-lobby-out [:game-lobby/lobby-state? {:payload "I want all players status"}])) 
                              (go-loop []
-                                (let [ev-msg (<! game-lobby-in)]
-                                  (debugf "game looby receiving: %s" ev-msg)
-                                  (handle-ev-msg ev-msg))
-                                (recur))(log "game lobby did mount"))
+                               (let [ev-msg (<! game-lobby-in)]
+                                 (debugf "game looby receiving: %s" ev-msg)
+                                 (handle-ev-msg ev-msg))
+                               (recur))(log "game lobby did mount"))
       :component-will-unmount (fn [_] (log "game loby will unmount"))
       :reagent-render (fn []
                         [main game-lobby-in game-lobby-out])})))
