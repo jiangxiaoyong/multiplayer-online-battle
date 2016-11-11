@@ -8,10 +8,17 @@
 (enable-console-print!)
 
 (def components-state (r/atom {}))
-(reset! components-state {:game-lobby {:player-come-animate "animated fadeInUp"
-                                       :player-ready-label "label label-success"
-                                       :player-unready-label "label label-default"
-                                       :player-ready-animate "animated bounceIn"} 
+(reset! components-state {:game-lobby {:style {:player-come-animated "animated fadeInUp"
+                                               :player-ready-span "label label-success"
+                                               :player-ready-label "ready"
+                                               :player-unready-span "label label-default"
+                                               :player-unready-label "unready"
+                                               :player-ready-animated "animated bounceIn"
+                                               :btn-ready "btn btn-lg btn-info btn-block"
+                                               :btn-ready-label "Waiting"
+                                               :btn-unready "btn btn-success btn-lg btn-block"
+                                               :btn-unready-label "Ready"
+                                               :btn-ready-animated "glyphicon glyphicon-refresh spinning"}} 
                           :landing-pg {:animate "animated fadeInDown"}})
 
 (def game-lobby-state (r/atom {}))
