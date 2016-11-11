@@ -34,11 +34,13 @@
         style-unready-span (get-in @components-state [:game-lobby :style :player-unready-span])
         style-player-come-animated (get-in @components-state [:game-lobby :style :player-come-animated])
         style-player-ready-label (get-in @components-state [:game-lobby :style :player-ready-label])
-        style-player-unready-label (get-in @components-state [:game-lobby :style :player-unready-label])]
-    (fn [{:keys [user-name ready?]}]
+        style-player-unready-label (get-in @components-state [:game-lobby :style :player-unready-label])
+        avatar-img-path (fn [img]
+                          (str "/images/avatars/" img))]
+    (fn [{:keys [user-name ready? avatar-img]}]
       [:tr {:class style-player-come-animated}
        [:td.user-info
-        [:img {:src "http://bootdey.com/img/Content/avatar/avatar1.png"}]
+        [:img {:src (avatar-img-path avatar-img)}]
         [:div.user-name user-name]]
        [:td.text-center
         [:h4 {:class (if ready? style-ready-animated)}

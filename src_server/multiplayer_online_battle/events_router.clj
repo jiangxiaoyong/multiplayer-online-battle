@@ -45,8 +45,8 @@
   (log/info "client-id:" client-id)
   (log/info "data" ?data)
   (if (contains? @players (keyword uid))
-    (log/info "player already exist!")
-    (swap! players conj {(keyword uid) {:client-id client-id :user-name uid :ready? false}})))
+    (log/info "player %s already exist!" uid)
+    (swap! players conj {(keyword uid) {:client-id client-id :user-name uid :avatar-img (str (rand-int 8) ".png") :ready? false}})))
 
 (defn return-player-info [{:as ev-msg :keys [uid client-id]}]
   (ws/send-fn uid [:game-lobby/player-current {:payload ((keyword uid) @players)}]))
