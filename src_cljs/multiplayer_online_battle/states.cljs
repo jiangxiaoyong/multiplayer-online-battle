@@ -8,6 +8,10 @@
 (enable-console-print!)
 
 (def components-state (r/atom {}))
-(reset! components-state {:game-loby {:animate "animated fadeInDown"} 
+(reset! components-state {:game-lobby {:player-come-animate "animated fadeInUp"
+                                       :player-ready-label "label label-success"
+                                       :player-unready-label "label label-default"
+                                       :player-ready-animate "animated bounceIn"} 
                           :landing-pg {:animate "animated fadeInDown"}})
 
+(def game-lobby-state (r/atom {}))

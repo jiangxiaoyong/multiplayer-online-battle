@@ -26,25 +26,25 @@
      (= :game-lobby/players-all ev-type) (swap! game-lobby-state assoc :players-all payload)
      (= :game-lobby/player-come ev-type) (if-not (me? (first (vals payload))) (swap! game-lobby-state update-in [:players-all] conj payload))
      (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload)
-     (= :game-lobby/player-update ev-type) (swap! game-lobby-state update-in [:players-all who :status] not))))
+     (= :game-lobby/player-update ev-type) (swap! game-lobby-state update-in [:players-all who :ready?] not))))
 
 (defn player-info []
-  (fn [{:keys [user-name status]}]
-    [:tr
+  (fn [{:keys [user-name ready?]}]
+    [:tr {:class (get-in @components-state [:game-lobby :player-come-animate])}
      [:td.user-info
       [:img {:src "http://bootdey.com/img/Content/avatar/avatar1.png"}]
       [:div.user-name user-name]]
      [:td.text-center
-      [:h4
-       [:span {:class (if status "label label-success" "label label-default")} (if status "ready" "unready")]]]]))
+      [:h4 {:class (if ready? (get-in @components-state [:game-lobby :player-ready-animate]))}
+       [:span {:class (if ready? (get-in @components-state [:game-lobby :player-ready-label]) (get-in @components-state [:game-lobby :player-unready-label]))} (if ready? "ready" "unready")]]]]))
 
-(defn statusBtn [game-lobby-out]
-  (fn []
-    (let [myself (first (keys (:player-current @game-lobby-state)))
-          ready? (:status (first (vals (:player-current @game-lobby-state))))]
+(defn statusBtn []
+  (fn [game-lobby-out ready?]
+    (let [myself (keyword (:user-name (:player-current @game-lobby-state)))]
+      (debugf "current state %s" ready?)
       [:button {:class (if ready? "btn btn-lg btn-info btn-block" "btn btn-success btn-lg btn-block")
                 :on-click #(do 
-                             (swap! game-lobby-state update-in [:player-current myself :status] not)
+                             (swap! game-lobby-state update-in [:player-current :ready?] not)
                              (go (>! game-lobby-out [:game-lobby/player-ready {:payload (:player-current @game-lobby-state)}])))}
        [:sapn {:class (if ready? "glyphicon glyphicon-refresh spinning")}] (if ready? "Waiting" "Ready")])))
 
@@ -72,7 +72,8 @@
          [players-table]
          [:div
           [:center
-           [statusBtn game-lobby-out]]]]]]]]))
+           (let [ready? (:ready? (:player-current @game-lobby-state))]
+             [statusBtn game-lobby-out ready?])]]]]]]]))
 
 (defn game-lobby []
   (let [{:keys [game-lobby-in game-lobby-out]} (game-lobby-ch)]
