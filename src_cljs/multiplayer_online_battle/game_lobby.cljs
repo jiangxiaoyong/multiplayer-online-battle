@@ -26,7 +26,11 @@
      (= :game-lobby/players-all ev-type) (swap! game-lobby-state assoc :players-all payload)
      (= :game-lobby/player-come ev-type) (if-not (me? (first (vals payload))) (swap! game-lobby-state update-in [:players-all] conj payload))
      (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload)
-     (= :game-lobby/player-update ev-type) (swap! game-lobby-state update-in [:players-all who :ready?] not))))
+     (= :game-lobby/player-update ev-type) (swap! game-lobby-state update-in [:players-all who :ready?] not)
+     (= :game-lobby/pre-enter-game ev-type) (do
+                                              (swap! components-state assoc-in [:game-lobby :style :btn-ready-animated] "animated fadeOutDown")
+                                              (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload))
+                                              (swap! components-state assoc-in [:game-lobby :style :btn-ready-label-animated] "animated fadeInDown")))))
 
 (defn player-info []
   (let [style-ready-animated (get-in @components-state [:game-lobby :style :player-ready-animated])
@@ -47,18 +51,21 @@
          [:span {:class (if ready? style-ready-span style-unready-span )} (if ready? style-player-ready-label style-player-unready-label)]]]])))
 
 (defn statusBtn []
-  (let [style-btn-ready (get-in @components-state [:game-lobby :style :btn-ready])
-        style-btn-unready (get-in @components-state [:game-lobby :style :btn-unready])
-        style-btn-ready-animated (get-in @components-state [:game-lobby :style :btn-ready-animated])
-        style-btn-ready-label (get-in @components-state [:game-lobby :style :btn-ready-label])
-        style-btn-unready-label (get-in @components-state [:game-lobby :style :btn-unready-label])]
+  (let []
     (fn [game-lobby-out]
-      (let [ready? (:ready? (:player-current @game-lobby-state))]
+      (let [ready? (:ready? (:player-current @game-lobby-state))
+            style-btn-ready-label (get-in @components-state [:game-lobby :style :btn-ready-label])
+            style-btn-ready-label-animated (get-in @components-state [:game-lobby :style :btn-ready-label-animated])
+            style-btn-ready-animated (get-in @components-state [:game-lobby :style :btn-ready-animated])
+            style-btn-ready (get-in @components-state [:game-lobby :style :btn-ready])
+            style-btn-unready (get-in @components-state [:game-lobby :style :btn-unready])
+            style-btn-unready-label (get-in @components-state [:game-lobby :style :btn-unready-label])
+            ]
         [:button {:class (if ready? style-btn-ready style-btn-unready)
                   :on-click #(do 
                                (swap! game-lobby-state update-in [:player-current :ready?] not)
                                (go (>! game-lobby-out [:game-lobby/player-ready {:payload (:player-current @game-lobby-state)}])))}
-         [:sapn {:class (if ready? style-btn-ready-animated)}] (if ready? style-btn-ready-label style-btn-unready-label)]))))
+         [:sapn {:class (if ready? style-btn-ready-animated)}] [:div {:class (if ready? style-btn-ready-label-animated)} (if ready? style-btn-ready-label style-btn-unready-label)]]))))
 
 (defn players-table []
   (fn []

@@ -16,6 +16,7 @@
                                                :player-ready-animated "animated bounceIn"
                                                :btn-ready "not-active btn btn-lg btn-info btn-block animated flipInX"
                                                :btn-ready-label "Waiting"
+                                               :btn-ready-label-animated ""
                                                :btn-unready "btn btn-success btn-lg btn-block"
                                                :btn-unready-label "Ready"
                                                :btn-ready-animated "glyphicon glyphicon-refresh spinning"}} 

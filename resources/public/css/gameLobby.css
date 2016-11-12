@@ -200,3 +200,8 @@ body{margin-top:20px;}
    pointer-events: none;
    cursor: default;
 }
+
+.status-btn-label {
+    display: inline
+    margin-left: 10px
+}
