@@ -8,11 +8,9 @@
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.game-state :refer [players]]
             [multiplayer-online-battle.synchronization :refer [synchronize-game-lobby]]
-            [multiplayer-online-battle.websocket :as ws]
-            ))
+            [multiplayer-online-battle.websocket :as ws]))
 
-
-;; Game Lobby events handler
+;;;;;;;;;;;;;;;;;;;;;;;; Game Lobby events handler
 
 (defn check-game-lobby-state [old new]
   (cond
@@ -32,12 +30,16 @@
     (let [{:keys [ev-type player]} (check-game-lobby-state old new)]
       (synchronize-game-lobby ev-type player))))
 
-;; (defn have-player? [user-name]
-;;   (some true?
-;;    (for [player @players]
-;;       (if (= user-name (get-in player [:user-name]))
-;;         true
-;;         false))))
+(defn pre-enter-game []
+  (log/info "notify all players pre-entering game")
+  (synchronize-game-lobby :game-lobby/pre-enter-game))
+
+(defn check-all-ready []
+  (let [all-players-ready? (fn []
+                             (every? #(if (:ready? %) true false) (vals @players)))]
+    (if (all-players-ready?) (pre-enter-game))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;; landing page event handler
 
 (defn register-player [{:as ev-msg :keys [id uid client-id ?data]}]
   (log/info "id:" id)
@@ -82,7 +84,8 @@
 (defmethod event :game-lobby/player-ready
   [{:as ev-msg :keys [client-id uid ?data]}]
   (log/info "player %s is ready now!" uid)
-  (swap! players assoc-in [(keyword uid) :ready?] true))
+  (swap! players assoc-in [(keyword uid) :ready?] true)
+  (check-all-ready))
 
 ;;------------Set up Sente events router-------------
 (defonce event-router (atom nil))
