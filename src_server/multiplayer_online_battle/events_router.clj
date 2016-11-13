@@ -20,26 +20,27 @@
         old-players-count (count (keys (:all-players old)))]
     (cond
      (> new-players-count old-players-count) {:ev-type :game-lobby/player-come
-                                              :player (:all-players (second (diff old new)))}
+                                              :data (:all-players (second (diff old new)))}
      (< new-players-count old-players-count) {:ev-type :game-looby/player-leave
-                                              :player (:all-players (first (diff old new)))}
+                                              :data (:all-players (first (diff old new)))}
+     (and (= new-players-count old-players-count)
+          (contains? (second (diff old new)) :all-players-ready)) {:ev-type :game-lobby/all-players-ready
+                                                                   :data {:all-players-ready (:all-players-ready @players)}}
      (and (= new-players-count old-players-count)
           (contains? (second (diff old new)) :all-players)) {:ev-type :game-lobby/player-update
-                                                             :player (:all-players (second (diff old new)))})))
+                                                             :data (:all-players (second (diff old new)))})))
 
 (defn fire-game-lobby-sync 
   [key watched old new]
   (when-not (= old new)
-    (log/info "fire lobby sync!!!")
-    (log/info "old === " old)
-    (log/info "new === " new)
-    (let [{:keys [ev-type player]} (check-game-lobby-state old new)]
-      (synchronize-game-lobby ev-type player))))
+    (log/info "old lobby state === " old)
+    (log/info "new lobby state === " new)
+    (let [{:keys [ev-type data]} (check-game-lobby-state old new)]
+      (synchronize-game-lobby ev-type data))))
 
 (defn pre-enter-game []
   (log/info "notify all players pre-entering game")
   (swap! players update-in [:all-players-ready] not)
-  (synchronize-game-lobby :game-lobby/all-players-ready {:all-players-ready (:all-players-ready @players)})
   (synchronize-game-lobby :game-lobby/pre-enter-game))
 
 (defn check-all-ready []

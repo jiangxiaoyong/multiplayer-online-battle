@@ -13,6 +13,9 @@
 
 (def game-lobby-state (r/atom {}))
 
+(defn init-game-lobby-state []
+  (swap! game-lobby-state assoc-in [:all-players-ready] false))
+
 (defn me? [{:keys [:user-name] :as msg}]
   (if (= user-name (:user-name (first (vals (:player-current @game-lobby-state)))))
     true
@@ -27,10 +30,8 @@
      (= :game-lobby/player-come ev-type) (if-not (me? (first (vals payload))) (swap! game-lobby-state update-in [:players-all] conj payload))
      (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload)
      (= :game-lobby/player-update ev-type) (swap! game-lobby-state update-in [:players-all who :ready?] not)
-     (= :game-lobby/pre-enter-game ev-type) (do
-                                              (swap! components-state assoc-in [:game-lobby :style :btn-ready-animated] "animated fadeOutDown")
-                                              (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload))
-                                              (swap! components-state assoc-in [:game-lobby :style :btn-ready-label-animated] "animated fadeInDown")))))
+     (= :game-lobby/all-players-ready ev-type) (swap! game-lobby-state update-in [:all-players-ready] not)
+     (= :game-lobby/pre-enter-game ev-type) (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload)))))
 
 (defn player-info []
   (let [style-ready-animated (get-in @components-state [:game-lobby :style :player-ready-animated])
@@ -53,19 +54,20 @@
 (defn statusBtn []
   (let []
     (fn [game-lobby-out]
-      (let [ready? (:ready? (:player-current @game-lobby-state))
+      (let [player-ready? (:ready? (:player-current @game-lobby-state))
+            all-players-ready? (:all-players-ready @game-lobby-state)
             style-btn-ready-label (get-in @components-state [:game-lobby :style :btn-ready-label])
-            style-btn-ready-label-animated (get-in @components-state [:game-lobby :style :btn-ready-label-animated])
+            style-btn-ready-label-static (get-in @components-state [:game-lobby :style :btn-ready-label-static])
+            style-btn-all-ready-label-animated (get-in @components-state [:game-lobby :style :btn-all-ready-label-animated])
             style-btn-ready-animated (get-in @components-state [:game-lobby :style :btn-ready-animated])
             style-btn-ready (get-in @components-state [:game-lobby :style :btn-ready])
             style-btn-unready (get-in @components-state [:game-lobby :style :btn-unready])
-            style-btn-unready-label (get-in @components-state [:game-lobby :style :btn-unready-label])
-            ]
-        [:button {:class (if ready? style-btn-ready style-btn-unready)
+            style-btn-unready-label (get-in @components-state [:game-lobby :style :btn-unready-label])]
+        [:button {:class (if player-ready? style-btn-ready style-btn-unready)
                   :on-click #(do 
                                (swap! game-lobby-state update-in [:player-current :ready?] not)
                                (go (>! game-lobby-out [:game-lobby/player-ready {:payload (:player-current @game-lobby-state)}])))}
-         [:sapn {:class (if ready? style-btn-ready-animated)}] [:div {:class (if ready? style-btn-ready-label-animated)} (if ready? style-btn-ready-label style-btn-unready-label)]]))))
+         [:sapn {:class (if player-ready? style-btn-ready-animated)}] [:div.status-btn-label (if player-ready? style-btn-ready-label style-btn-unready-label)]]))))
 
 (defn players-table []
   (fn []
@@ -99,6 +101,7 @@
      {:componnet-will-mount (fn [_]
                               (log "game lobby will mount"))
       :component-did-mount (fn [_]
+                             (init-game-lobby-state)
                              (go
                                (>! game-lobby-out [:game-lobby/register {:payload "I am new player"}])
                                (>! game-lobby-out [:game-lobby/lobby-state? {:payload "I want all players status"}])) 
@@ -106,7 +109,8 @@
                                (let [ev-msg (<! game-lobby-in)]
                                  (debugf "game looby receiving: %s" ev-msg)
                                  (handle-ev-msg ev-msg))
-                               (recur))(log "game lobby did mount"))
+                               (recur))
+                             (log "game lobby did mount"))
       :component-will-unmount (fn [_] (log "game loby will unmount"))
       :reagent-render (fn []
                         [main game-lobby-in game-lobby-out])})))
