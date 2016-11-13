@@ -16,6 +16,9 @@
 (defn init-game-lobby-state []
   (swap! game-lobby-state assoc-in [:all-players-ready] false))
 
+(defn get-state-value [k]
+  (get-in @components-state (map #(keyword %) (str/split k #" "))))
+
 (defn me? [{:keys [:user-name] :as msg}]
   (if (= user-name (:user-name (first (vals (:player-current @game-lobby-state)))))
     true
@@ -34,12 +37,12 @@
      (= :game-lobby/pre-enter-game ev-type) (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload)))))
 
 (defn player-info []
-  (let [style-ready-animated (get-in @components-state [:game-lobby :style :player-ready-animated])
-        style-ready-span (get-in @components-state [:game-lobby :style :player-ready-span])
-        style-unready-span (get-in @components-state [:game-lobby :style :player-unready-span])
-        style-player-come-animated (get-in @components-state [:game-lobby :style :player-come-animated])
-        style-player-ready-label (get-in @components-state [:game-lobby :style :player-ready-label])
-        style-player-unready-label (get-in @components-state [:game-lobby :style :player-unready-label])
+  (let [style-ready-animated (get-state-value "game-lobby style player-ready-animated")
+        style-ready-span (get-state-value "game-lobby style player-ready-span")
+        style-unready-span (get-state-value "game-lobby style player-unready-span")
+        style-player-come-animated (get-state-value "game-lobby style player-come-animated")
+        style-player-ready-label (get-state-value "game-lobby style player-ready-label")
+        style-player-unready-label (get-state-value "game-lobby style player-unready-label")
         avatar-img-path (fn [img]
                           (str "/images/avatars/" img))]
     (fn [{:keys [user-name ready? avatar-img]}]
@@ -56,17 +59,17 @@
     (fn [game-lobby-out]
       (let [player-ready? (:ready? (:player-current @game-lobby-state))
             all-players-ready? (:all-players-ready @game-lobby-state)
-            style-btn-ready-label (get-in @components-state [:game-lobby :style :btn-ready-label])
-            style-btn-ready-label-static (get-in @components-state [:game-lobby :style :btn-ready-label-static])
-            style-btn-all-ready-label-animated (get-in @components-state [:game-lobby :style :btn-all-ready-label-animated])
-            style-btn-ready-animated (get-in @components-state [:game-lobby :style :btn-ready-animated])
-            style-btn-ready (get-in @components-state [:game-lobby :style :btn-ready])
-            style-btn-unready (get-in @components-state [:game-lobby :style :btn-unready])
-            style-btn-unready-label (get-in @components-state [:game-lobby :style :btn-unready-label])]
-        [:button {:class (if player-ready? style-btn-ready style-btn-unready)
-                  :on-click #(do 
-                               (swap! game-lobby-state update-in [:player-current :ready?] not)
-                               (go (>! game-lobby-out [:game-lobby/player-ready {:payload (:player-current @game-lobby-state)}])))}
+            style-btn-ready-label (get-state-value "game-lobby style btn-ready-label")
+            style-btn-ready-animated (get-state-value "game-lobby style btn-ready-animated")
+            style-btn-ready (get-state-value "game-lobby style btn-ready")
+            style-btn-unready (get-state-value "game-lobby style btn-unready")
+            style-btn-unready-label (get-state-value "game-lobby style btn-unready-label")]
+        [:a {:class (if player-ready? style-btn-ready style-btn-unready)
+             :href "#"
+             :role "button"
+             :on-click #(do 
+                          (swap! game-lobby-state update-in [:player-current :ready?] not)
+                          (go (>! game-lobby-out [:game-lobby/player-ready {:payload (:player-current @game-lobby-state)}])))}
          [:sapn {:class (if player-ready? style-btn-ready-animated)}] [:div.status-btn-label (if player-ready? style-btn-ready-label style-btn-unready-label)]]))))
 
 (defn players-table []

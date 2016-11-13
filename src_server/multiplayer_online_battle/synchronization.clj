@@ -21,13 +21,9 @@
                                      {:payload payload}]))))
         count-down (fn []
                      (go
-                       (broadcast {:count 3})
-                       (<! (timeout 1000))
-                       (broadcast {:count 2})
-                       (<! (timeout 1000))
-                       (broadcast {:count 1})
-                       (<! (timeout 1000))
-                       (broadcast {:count 0})))]
+                       (doseq [count [3 2 1 0]]
+                         (broadcast {:count count})
+                         (<! (timeout 1000)))))]
     (cond
      (= ev-type :game-lobby/player-come) (broadcast data)
      (= ev-type :game-looby/player-leave) (broadcast data)
