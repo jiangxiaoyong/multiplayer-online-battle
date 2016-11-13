@@ -12,14 +12,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;; Game Lobby events handler
 
+(defn init-game-lobby-state []
+  (swap! players assoc-in [:all-players-ready] false))
+
 (defn check-game-lobby-state [old new]
-  (cond
-   (> (count new) (count old)) {:ev-type :game-lobby/player-come
-                                :player (apply hash-map (first (filter identity (second (diff old new)))))}
-   (< (count new) (count old)) {:ev-type :game-looby/player-leave
-                                :player (apply hash-map (first (filter identity (first (diff old new)))))}
-   (= (count new) (count old)) {:ev-type :game-lobby/player-update
-                                :player (apply hash-map (first (filter identity (second (diff old new)))))}))
+  (let [new-players-count (count (keys (:all-players new)))
+        old-players-count (count (keys (:all-players old)))]
+    (cond
+     (> new-players-count old-players-count) {:ev-type :game-lobby/player-come
+                                              :player (:all-players (second (diff old new)))}
+     (< new-players-count old-players-count) {:ev-type :game-looby/player-leave
+                                              :player (:all-players (first (diff old new)))}
+     (and (= new-players-count old-players-count)
+          (contains? (second (diff old new)) :all-players)) {:ev-type :game-lobby/player-update
+                                                             :player (:all-players (second (diff old new)))})))
 
 (defn fire-game-lobby-sync 
   [key watched old new]
@@ -32,11 +38,13 @@
 
 (defn pre-enter-game []
   (log/info "notify all players pre-entering game")
+  (swap! players update-in [:all-players-ready] not)
+  (synchronize-game-lobby :game-lobby/all-players-ready {:all-players-ready (:all-players-ready @players)})
   (synchronize-game-lobby :game-lobby/pre-enter-game))
 
 (defn check-all-ready []
   (let [all-players-ready? (fn []
-                             (every? #(if (:ready? %) true false) (vals @players)))]
+                             (every? #(if (:ready? %) true false) (vals (:all-players @players))))]
     (if (all-players-ready?) (pre-enter-game))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;; landing page event handler
@@ -48,10 +56,10 @@
   (log/info "data" ?data)
   (if (contains? @players (keyword uid))
     (log/info "player %s already exist!" uid)
-    (swap! players conj {(keyword uid) {:client-id client-id :user-name uid :avatar-img (str (rand-int 8) ".png") :ready? false}})))
+    (swap! players update-in [:all-players] (fn [existing new] (into {} (conj existing new))) {(keyword uid) {:client-id client-id :user-name uid :avatar-img (str (rand-int 8) ".png") :ready? false}})))
 
 (defn return-player-info [{:as ev-msg :keys [uid client-id]}]
-  (ws/send-fn uid [:game-lobby/player-current {:payload ((keyword uid) @players)}]))
+  (ws/send-fn uid [:game-lobby/player-current {:payload ((keyword uid) (:all-players @players))}]))
 
 ;;----------- Sente events handler-------------
 (defmulti event :id)
@@ -79,12 +87,12 @@
 
 (defmethod event :game-lobby/lobby-state?
   [{:as ev-msg :keys [uid]}]
-  (ws/send-fn uid [:game-lobby/players-all {:payload @players}]))
+  (ws/send-fn uid [:game-lobby/players-all {:payload (:all-players @players)}]))
 
 (defmethod event :game-lobby/player-ready
   [{:as ev-msg :keys [client-id uid ?data]}]
   (log/info "player %s is ready now!" uid)
-  (swap! players assoc-in [(keyword uid) :ready?] true)
+  (swap! players update-in [:all-players (keyword uid) :ready?] not)
   (check-all-ready))
 
 ;;------------Set up Sente events router-------------
@@ -97,4 +105,5 @@
 (defn start-events-router []
   (log/info "Starting socket event router...")
   (stop-events-router)
+  (init-game-lobby-state)
   (reset! event-router (sente/start-chsk-router! ws/ch-recv event)))

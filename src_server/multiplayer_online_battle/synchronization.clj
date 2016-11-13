@@ -12,7 +12,7 @@
 (defn synchronize-game-lobby
   "server->client async pushes, setup a loop to broadcast all players status to all connected players 10 times per second"
   [ev-type & rest]
-  (let [player (first rest)
+  (let [data (first rest)
         broadcast (fn [payload]
                     (let [uids (:ws @ws/connected-uids)]
                       (doseq [uid uids]
@@ -21,15 +21,16 @@
                                      {:payload payload}]))))
         count-down (fn []
                      (go
-                       (broadcast {:count 3 :all-ready? true})
+                       (broadcast {:count 3})
                        (<! (timeout 1000))
-                       (broadcast {:count 2 :all-ready? true})
+                       (broadcast {:count 2})
                        (<! (timeout 1000))
-                       (broadcast {:count 1 :all-ready? true})
+                       (broadcast {:count 1})
                        (<! (timeout 1000))
-                       (broadcast {:count 0 :all-ready? true})))]
+                       (broadcast {:count 0})))]
     (cond
-     (= ev-type :game-lobby/player-come) (broadcast player)
-     (= ev-type :game-looby/player-leave) (broadcast player)
-     (= ev-type :game-lobby/player-update) (broadcast player)
-     (= ev-type :game-lobby/pre-enter-game) (count-down))))
+     (= ev-type :game-lobby/player-come) (broadcast data)
+     (= ev-type :game-looby/player-leave) (broadcast data)
+     (= ev-type :game-lobby/player-update) (broadcast data)
+     (= ev-type :game-lobby/pre-enter-game) (count-down)
+     (= ev-type :game-lobby/all-players-ready) (broadcast data))))
