@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! >! chan close!]]
             [clojure.string :as str]
+            [clojure.walk :as walk]
             [ajax.core :refer [GET POST]]
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
@@ -15,12 +16,15 @@
   (.assign js/window.location "/gamelobby"))
 
 (defn error-handler [{:keys [status status-text response]}]
-  (.log js/console (str "something bad happened: " status " " status-text " response" response)))
+  (let [resp (->
+               (js->clj response))]
+    (swap! components-state update-in [:landing-pg :allow-in] not)
+    (.log js/console (str "something bad happened: " status " " status-text " resp" resp))))
 
-(defn register-user-info [component-state]
+(defn register-user-info []
   (let [input-val (r/atom "")]
     (fn []
-      [:div#landing-pg.container {:class (get-in @component-state [:landing-pg :animate])}
+      [:div#landing-pg.container {:class (get-in @components-state [:landing-pg :animate])}
        [:div.row
         [:div.col-md-6.col-md-offset-3
          [:div.panel.panel-login
@@ -30,6 +34,10 @@
              [:form#register-form
               [:h2
                [:center "Multiple Online Battle Arena"]]
+              [:div {:class (if-not (get-in @components-state [:landing-pg :allow-in]) "alert alert-warning" "warning-msg-box")}
+               [:center
+                [:strong "Warning! "]
+                "Battle in progress, please try later on"]]
               [:div.form-group
                [:input {:type "text" 
                         :id "username" 
@@ -63,6 +71,6 @@
     :component-will-unmount (fn [_]
                               (log "app component will Unmount"))
     :reagent-render (fn []
-                      [register-user-info components-state])}))
+                      [register-user-info])}))
 
 

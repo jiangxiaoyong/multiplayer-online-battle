@@ -227,3 +227,7 @@ label {
 .container {
   margin-top: 150px;
 }
+
+.warning-msg-box {
+  display: none;
+}

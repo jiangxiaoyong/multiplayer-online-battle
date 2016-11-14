@@ -16,13 +16,11 @@
                                                :player-ready-animated "animated bounceIn"
                                                :btn-ready "not-active btn btn-lg btn-info btn-block animated flipInX"
                                                :btn-ready-label "Waiting..."
-                                               :btn-ready-label-static "status-btn-label"
                                                :btn-ready-animated "fa fa-circle-o-notch fa-spin"
-                                               :btn-all-ready-animated "animated fadeOutDown"
-                                               :btn-all-ready-label-animated "animated slideInRight status-btn-label"
                                                :btn-unready "btn btn-success btn-lg btn-block"
                                                :btn-unready-label "Ready"
                                                }} 
-                          :landing-pg {:animate "animated fadeInDown"}})
+                          :landing-pg {:animate "animated fadeInDown"
+                                       :allow-in true}})
 
 (def game-lobby-state (r/atom {}))
