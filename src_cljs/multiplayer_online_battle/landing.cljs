@@ -34,9 +34,9 @@
              [:form#register-form
               [:h2
                [:center "Multiple Online Battle Arena"]]
-              [:div {:class (if-not (get-in @components-state [:landing-pg :allow-in]) "alert alert-warning" "warning-msg-box")}
+              [:div {:class (if-not (get-in @components-state [:landing-pg :allow-in]) "animated tada alert alert-info" "alert-msg-box")}
                [:center
-                [:strong "Warning! "]
+                [:strong "Info! "]
                 "Battle in progress, please try later on"]]
               [:div.form-group
                [:input {:type "text" 
