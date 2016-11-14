@@ -11,6 +11,8 @@
             [clojure.pprint :refer [pprint]]
             [multiplayer-online-battle.websocket :as ws]
             [multiplayer-online-battle.synchronization :refer [synchronize-game-lobby]]
+            [multiplayer-online-battle.game-state :refer [players]]
+            [multiplayer-online-battle.events-router :refer [check-all-players-ready]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             ))
 
@@ -22,12 +24,14 @@
    "text/html"))
 
 (defn login-handler [req]
-  (let [{:keys [session params]} req
-        {:keys [user-name]} params]
-    (debugf "login params: %s " params)
-    (debugf "login session %s " session )
-    (debugf "login user name %s " user-name)
-    {:status 200 :session (assoc session :uid user-name)}))
+  (if-not (check-all-players-ready)
+    (let [{:keys [session params]} req
+          {:keys [user-name]} params]
+      (debugf "login params: %s " params)
+      (debugf "login session %s " session )
+      (debugf "login user name %s " user-name)
+      {:status 200 :session (assoc session :uid user-name)})
+    {:status 409 :body {:msg "battle in progress"}}))
 
 (defn game-lobby-handler [req]
   (response/content-type

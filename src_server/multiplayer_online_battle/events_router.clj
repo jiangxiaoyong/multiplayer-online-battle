@@ -43,10 +43,13 @@
   (swap! players update-in [:all-players-ready] not)
   (synchronize-game-lobby :game-lobby/pre-enter-game))
 
-(defn check-all-ready []
-  (let [all-players-ready? (fn []
-                             (every? #(if (:ready? %) true false) (vals (:all-players @players))))]
-    (if (all-players-ready?) (pre-enter-game))))
+(defn check-all-players-ready []
+  (if-not (nil? (:all-players @players))
+    (every? #(if (:ready? %) true false) (vals (:all-players @players)))
+    false))
+
+(defn ready-to-gaming []
+  (if (check-all-players-ready) (pre-enter-game)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;; landing page event handler
 
@@ -94,7 +97,7 @@
   [{:as ev-msg :keys [client-id uid ?data]}]
   (log/info "player %s is ready now!" uid)
   (swap! players update-in [:all-players (keyword uid) :ready?] not)
-  (check-all-ready))
+  (ready-to-gaming))
 
 ;;------------Set up Sente events router-------------
 (defonce event-router (atom nil))

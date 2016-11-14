@@ -14,6 +14,9 @@
   (log "server response " res)
   (.assign js/window.location "/gamelobby"))
 
+(defn error-handler [{:keys [status status-text response]}]
+  (.log js/console (str "something bad happened: " status " " status-text " response" response)))
+
 (defn register-user-info [component-state]
   (let [input-val (r/atom "")]
     (fn []
@@ -48,7 +51,8 @@
                                                       (js/FormData.)
                                                       (.append "user-name" @input-val))]
                                        (POST "/login" {:body formdata
-                                                       :handler handler}))}]]]]]]]]]]]])))
+                                                       :handler handler
+                                                       :error-handler error-handler}))}]]]]]]]]]]]])))
 
 (defn landing []
   (r/create-class
