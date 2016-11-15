@@ -7,7 +7,8 @@
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.sente  :as sente]
-            [multiplayer-online-battle.states :refer [components-state]]))
+            [multiplayer-online-battle.states :refer [components-state]]
+            [multiplayer-online-battle.utils :refer [mount-dom]]))
 
 (enable-console-print!)
 
@@ -33,7 +34,7 @@
             [:div.col-lg-12
              [:form#register-form
               [:h2
-               [:center "Multiple Online Battle Arena"]]
+               [:center "Multiple Online Battle Arena!!!"]]
               [:div {:class (if-not (get-in @components-state [:landing-pg :allow-in]) "animated tada alert alert-info" "alert-msg-box")}
                [:center
                 [:strong "Info! "]
@@ -73,4 +74,9 @@
     :reagent-render (fn []
                       [register-user-info])}))
 
+(defn fig-reload []
+  (.log js/console "landing page figwheel reloaded! ")
+  (mount-dom #'landing))
 
+(defn ^:export run []
+  (mount-dom #'landing))

@@ -45,7 +45,49 @@
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
   :cljsbuild {:builds
-              [{:id "dev"
+              [{:id "landing"
+                :source-paths ["src_cljs"]
+
+                ;; the presence of a :figwheel configuration here
+                ;; will cause figwheel to inject the figwheel client
+                ;; into your build
+                :figwheel {:on-jsload "multiplayer-online-battle.landing/fig-reload"
+                           ;; :open-urls will pop open your application
+                           ;; in the default browser once Figwheel has
+                           ;; started and complied your application.
+                           ;; Comment this out once it no longer serves you.
+                           :open-urls ["http://localhost:8080/index.html"]}
+
+                :compiler {:main multiplayer-online-battle.landing
+                           :asset-path "js/compiled/out_landing"
+                           :output-to "resources/public/js/compiled/multiplayer_online_battle_landing.js"
+                           :output-dir "resources/public/js/compiled/out_landing"
+                           :source-map-timestamp true
+                           ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
+                           ;; https://github.com/binaryage/cljs-devtools
+                           :preloads [devtools.preload]}}
+               {:id "game-lobby"
+                :source-paths ["src_cljs"]
+
+                ;; the presence of a :figwheel configuration here
+                ;; will cause figwheel to inject the figwheel client
+                ;; into your build
+                :figwheel {:on-jsload "multiplayer-online-battle.game-lobby/fig-reload"
+                           ;; :open-urls will pop open your application
+                           ;; in the default browser once Figwheel has
+                           ;; started and complied your application.
+                           ;; Comment this out once it no longer serves you.
+                           :open-urls ["http://localhost:8080/gamelobby.html"]}
+
+                :compiler {:main multiplayer-online-battle.game-lobby
+                           :asset-path "js/compiled/out_landing"
+                           :output-to "resources/public/js/compiled/multiplayer_online_battle_game_lobby.js"
+                           :output-dir "resources/public/js/compiled/out_game_lobby"
+                           :source-map-timestamp true
+                           ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
+                           ;; https://github.com/binaryage/cljs-devtools
+                           :preloads [devtools.preload]}}
+               {:id "gaming"
                 :source-paths ["src_cljs"]
 
                 ;; the presence of a :figwheel configuration here
@@ -56,12 +98,12 @@
                            ;; in the default browser once Figwheel has
                            ;; started and complied your application.
                            ;; Comment this out once it no longer serves you.
-                           :open-urls ["http://localhost:8080/index.html"]}
+                           :open-urls ["http://localhost:8080/gaming.html"]}
 
-                :compiler {:main multiplayer-online-battle.game-lobby
-                           :asset-path "js/compiled/out_game_lobby"
-                           :output-to "resources/public/js/compiled/multiplayer_online_battle_game_lobby.js"
-                           :output-dir "resources/public/js/compiled/out_game_lobby"
+                :compiler {:main multiplayer-online-battle.flappy-bird
+                           :asset-path "js/compiled/out_flappy_bird"
+                           :output-to "resources/public/js/compiled/multiplayer_online_battle_flappy_bird.js"
+                           :output-dir "resources/public/js/compiled/out_flappy_bird"
                            :source-map-timestamp true
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
                            ;; https://github.com/binaryage/cljs-devtools

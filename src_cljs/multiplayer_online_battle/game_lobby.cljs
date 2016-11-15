@@ -120,7 +120,7 @@
                         [main game-lobby-in game-lobby-out])})))
 
 (defn fig-reload []
-  (.log js/console "figwheel reloaded! ")
+  (.log js/console "game lobby figwheel reloaded! ")
   (mount-dom #'game-lobby))
 
 (defn ^:export run []
