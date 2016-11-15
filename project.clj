@@ -58,10 +58,10 @@
                            ;; Comment this out once it no longer serves you.
                            :open-urls ["http://localhost:8080/index.html"]}
 
-                :compiler {:main multiplayer-online-battle.flappy-bird
-                           :asset-path "js/compiled/out"
-                           :output-to "resources/public/js/compiled/multiplayer_online_battle.js"
-                           :output-dir "resources/public/js/compiled/out"
+                :compiler {:main multiplayer-online-battle.game-lobby
+                           :asset-path "js/compiled/out_game_lobby"
+                           :output-to "resources/public/js/compiled/multiplayer_online_battle_game_lobby.js"
+                           :output-dir "resources/public/js/compiled/out_game_lobby"
                            :source-map-timestamp true
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
                            ;; https://github.com/binaryage/cljs-devtools
