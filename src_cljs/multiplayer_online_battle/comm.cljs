@@ -25,7 +25,7 @@
 ;;;;;;;;;;;;; Set up Sente event handler
 (defn where-to-route? [ev-type]
   (let [where? (fn [ev] 
-                            (keyword (namespace ev)))]
+                 (keyword (namespace ev)))]
     (cond
      (= :game-lobby (where? ev-type)) :game-lobby
      (= :gaming (where? ev-type)) :gaming
@@ -48,7 +48,7 @@
                                  route-to (where-to-route? ev-type)]
                              (cond
                               (= route-to :game-lobby) (>! ws->lobby ?data)
-                              (= route-to :gaming/play) (>! ws->gaming ?data)
+                              (= route-to :gaming) (>! ws->gaming ?data)
                               :else "Unknow game event"))))
       (recur))
     {:ws->lobby ws->lobby
@@ -71,6 +71,24 @@
       (recur))
     {:game-lobby-in game-lobby-in
      :game-lobby-out game-lobby-out}))
+
+;;;;;;;;;;;;;; Gaming async channel
+
+(defn gaming-ch []
+  (let [gaming-in (chan)
+        gaming-out (chan)]
+    (go-loop []
+      (let [[data ch] (alts! [ws->gaming gaming-out])]
+        (cond
+         (= ch ws->gaming) (do
+                            (infof "gaming channel receiving %s" data)
+                            (>! gaming-in data))
+         (= ch gaming-out) (do
+                            (infof "gaming channel sending data %s" data)
+                            (send-fn data))))
+      (recur))
+    {:gaming-in gaming-in
+     :gaming-out gaming-out}))
 
 ;;;;;;;;;;;;;;; Define Sente event handlers
 

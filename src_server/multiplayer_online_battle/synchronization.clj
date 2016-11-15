@@ -2,7 +2,7 @@
   (:gen-class)
   (:require [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]]
-            [clojure.core.async :as async  :refer (<! <!! >! >!! put! chan go go-loop timeout)]
+            [clojure.core.async :as async  :refer (<! <!! >! >!! put! take! chan go go-loop timeout)]
             [multiplayer-online-battle.websocket :as ws]
             [taoensso.timbre    :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.game-state :refer [players]]))
@@ -28,5 +28,6 @@
      (= ev-type :game-lobby/player-come) (broadcast data)
      (= ev-type :game-looby/player-leave) (broadcast data)
      (= ev-type :game-lobby/player-update) (broadcast data)
-     (= ev-type :game-lobby/pre-enter-game) (count-down)
+     (= ev-type :game-lobby/pre-enter-game-count-down) (count-down)
+     (= ev-type :game-lobby/pre-enter-game-dest) (broadcast data)
      (= ev-type :game-lobby/all-players-ready) (broadcast data))))

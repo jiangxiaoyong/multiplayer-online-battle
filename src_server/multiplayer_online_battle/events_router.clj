@@ -1,6 +1,7 @@
 (ns multiplayer-online-battle.events-router
   (:gen-class)
   (:require [clojure.tools.logging :as log]
+            [clojure.core.async :as async  :refer (<! <!! >! >!! put! chan go go-loop timeout)]
             [clojure.pprint :refer [pprint]]
             [clojure.data :refer [diff]]
             [taoensso.sente :as sente]
@@ -14,6 +15,10 @@
 
 (defn init-game-lobby-state []
   (swap! players assoc-in [:all-players-ready] false))
+
+(defn reset-game []
+  (reset! players {})
+  (init-game-lobby-state))
 
 (defn check-game-lobby-state [old new]
   (let [new-players-count (count (keys (:all-players new)))
@@ -41,7 +46,10 @@
 (defn pre-enter-game []
   (log/info "notify all players pre-entering game")
   (swap! players update-in [:all-players-ready] not)
-  (synchronize-game-lobby :game-lobby/pre-enter-game))
+  (let [pre-enter-game-count-down "game-lobby/pre-enter-game-count-down"
+        pre-enter-game-dest "game-lobby/pre-enter-game-dest"]
+    (<!! (synchronize-game-lobby (keyword pre-enter-game-count-down))) ;; ugly solution, use blocking take that waiting timeout chan close,which returen nil
+    (synchronize-game-lobby (keyword pre-enter-game-dest) {:dest "/gaming"})))
 
 (defn check-all-players-ready []
   (if-not (nil? (:all-players @players))

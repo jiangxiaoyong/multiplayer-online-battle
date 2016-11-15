@@ -51,14 +51,14 @@
                 ;; the presence of a :figwheel configuration here
                 ;; will cause figwheel to inject the figwheel client
                 ;; into your build
-                :figwheel {:on-jsload "multiplayer-online-battle.core/fig-reload"
+                :figwheel {:on-jsload "multiplayer-online-battle.flappy-bird/fig-reload"
                            ;; :open-urls will pop open your application
                            ;; in the default browser once Figwheel has
                            ;; started and complied your application.
                            ;; Comment this out once it no longer serves you.
                            :open-urls ["http://localhost:8080/index.html"]}
 
-                :compiler {:main multiplayer-online-battle.game-lobby
+                :compiler {:main multiplayer-online-battle.flappy-bird
                            :asset-path "js/compiled/out"
                            :output-to "resources/public/js/compiled/multiplayer_online_battle.js"
                            :output-dir "resources/public/js/compiled/out"

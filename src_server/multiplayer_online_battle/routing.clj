@@ -38,6 +38,11 @@
    (response/resource-response "public/gameLobby.html")
    "text/html"))
 
+(defn gaming-handler [req]
+  (response/content-type
+   (response/resource-response "public/gaming.html")
+   "text/html"))
+
 ;;---------- Define routing ----------------
 (defroutes all-routes
   (GET  "/"     req (home-pg-handler req))
@@ -45,6 +50,7 @@
   (POST "/chsk" req (ws/ajax-post-fn req))
   (GET  "/status" req (str "Connected id: " (pr-str @ws/connected-uids)))
   (GET "/gamelobby" req (game-lobby-handler req))
+  (GET "/gaming" req (gaming-handler req))
   (POST "/login" req (login-handler req))
   (route/resources "/")
   (route/not-found "<p> Page not found. </p>"))

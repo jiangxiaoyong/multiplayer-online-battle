@@ -34,7 +34,8 @@
      (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload)
      (= :game-lobby/player-update ev-type) (swap! game-lobby-state update-in [:players-all who :ready?] not)
      (= :game-lobby/all-players-ready ev-type) (swap! game-lobby-state update-in [:all-players-ready] not)
-     (= :game-lobby/pre-enter-game ev-type) (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload)))))
+     (= :game-lobby/pre-enter-game-count-down ev-type) (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload))
+     (= :game-lobby/pre-enter-game-dest ev-type) (.assign js/window.location (:dest payload)))))
 
 (defn player-info []
   (let [style-ready-animated (get-state-value "game-lobby style player-ready-animated")
