@@ -1,7 +1,10 @@
 (ns multiplayer-online-battle.flappy-bird
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [cljs.core.async :refer [<! >! chan close!]]
+  (:require [cljs.core.async :refer [<! chan sliding-buffer put! close! timeout]]
             [clojure.string :as str]
+            [cljsjs.react]
+            [cljsjs.react.dom]
+            [sablono.core :as sab :include-macros true]
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
