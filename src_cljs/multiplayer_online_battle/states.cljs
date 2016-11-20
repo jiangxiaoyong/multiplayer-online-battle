@@ -34,12 +34,8 @@
 
 (def flap-starting-state {:timer-running false
                           :flappy-start-time 0
-<<<<<<< HEAD
                           :flappy-y 300
                           :start-time 0
                           :initial-vel 0})
-=======
-                          :flappy-y 561
-                          :start-time 0})
->>>>>>> 85acc29778f86a440bd2800d33369b8e7afd87eb
+
 (def flap-state (r/atom flap-starting-state))
