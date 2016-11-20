@@ -9,12 +9,46 @@
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.comm :refer [reconnect start-comm gaming-ch]]
-            [multiplayer-online-battle.states :refer [components-state]]
+            [multiplayer-online-battle.states :refer [components-state flap-starting-state flap-state]]
             [multiplayer-online-battle.utils :refer [mount-dom]]))
+
+(def start-y 561)
+
+(defn reset-state [time-state])
+
+(defn sine-wave [st]
+  (assoc st
+    :flappy-y
+    (+ start-y (* 30 (.sin js/Math (/ (:time-delta st) 300))))))
+
+(defn update-flappy [{:keys [time-delta flappy-y] :as state}])
+
+(defn animation-update [time-stamp state]
+  (-> state
+      (assoc
+          :cur-time time-stamp
+          :time-delta (- time-stamp (:flappy-start-time state)))
+      update-flappy))
+
+(defn animation-loop [time-stamp]
+  (let [new-state (swap! flap-state (partial animation-update time-stamp))]
+    (when (:timer-running new-state)
+      (.requestAnimationFrame js/window animation-loop))))
+
+(defn start-game []
+  (.requestAnimationFrame
+   js/window
+   (fn [time-stamp]
+     (reset! flap-state (reset-state time-stamp))
+     (animation-loop time-stamp))))
 
 (defn main []
   (fn []
-    [:div "hello world"]))
+    [:div#board-area
+     [:div.board {:onMouseDown (fn [e] (infof "Game area mouse Click!!"))}
+      [:h1.score]
+      [:a.start-button {:on-click #(start-game)} "START"]
+      [:div.flappy {:style {:top "100px"}}]]]))
 
 (defn flappy-bird []
   (let [{:keys [gaming-in gaming-out]} (gaming-ch)]
