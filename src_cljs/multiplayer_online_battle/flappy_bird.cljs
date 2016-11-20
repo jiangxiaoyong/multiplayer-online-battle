@@ -12,6 +12,7 @@
             [multiplayer-online-battle.states :refer [components-state flap-starting-state flap-state]]
             [multiplayer-online-battle.utils :refer [mount-dom]]))
 
+<<<<<<< HEAD
 (def start-y 300)
 (def gravity 0.05)
 (def flappy-height 41)
@@ -48,6 +49,18 @@
     (debugf "time-delt %s cur-vel %s new-y %s" time-delta cur-vel new-y)
     (assoc state :flappy-y new-y))
   )
+=======
+(def start-y 561)
+
+(defn reset-state [time-state])
+
+(defn sine-wave [st]
+  (assoc st
+    :flappy-y
+    (+ start-y (* 30 (.sin js/Math (/ (:time-delta st) 300))))))
+
+(defn update-flappy [{:keys [time-delta flappy-y] :as state}])
+>>>>>>> 85acc29778f86a440bd2800d33369b8e7afd87eb
 
 (defn animation-update [time-stamp state]
   (-> state
@@ -59,19 +72,26 @@
 (defn animation-loop [time-stamp]
   (let [new-state (swap! flap-state (partial animation-update time-stamp))]
     (when (:timer-running new-state)
+<<<<<<< HEAD
       (debugf "new flap-state %s" @flap-state)
+=======
+>>>>>>> 85acc29778f86a440bd2800d33369b8e7afd87eb
       (.requestAnimationFrame js/window animation-loop))))
 
 (defn start-game []
   (.requestAnimationFrame
    js/window
    (fn [time-stamp]
+<<<<<<< HEAD
      (infof "Start Game")
+=======
+>>>>>>> 85acc29778f86a440bd2800d33369b8e7afd87eb
      (reset! flap-state (reset-state time-stamp))
      (animation-loop time-stamp))))
 
 (defn main []
   (fn []
+<<<<<<< HEAD
     (let [{:keys [flappy-y]} @flap-state]
       [:div#board-area
        [:div.board {:onMouseDown (fn [e]
@@ -80,6 +100,13 @@
         [:h1.score]
         [:a.start-button {:on-click #(start-game)} "START"]
         [:div.flappy {:style {:top (px flappy-y)}}]]])))
+=======
+    [:div#board-area
+     [:div.board {:onMouseDown (fn [e] (infof "Game area mouse Click!!"))}
+      [:h1.score]
+      [:a.start-button {:on-click #(start-game)} "START"]
+      [:div.flappy {:style {:top "100px"}}]]]))
+>>>>>>> 85acc29778f86a440bd2800d33369b8e7afd87eb
 
 (defn flappy-bird []
   (let [{:keys [gaming-in gaming-out]} (gaming-ch)]
