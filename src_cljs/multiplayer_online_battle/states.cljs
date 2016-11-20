@@ -7,6 +7,8 @@
 
 (enable-console-print!)
 
+;; UI components state
+
 (def components-state (r/atom {}))
 (reset! components-state {:game-lobby {:style {:player-come-animated "animated fadeInUp"
                                                :player-ready-span "label label-success"
@@ -23,4 +25,15 @@
                           :landing-pg {:animate "animated fadeInDown"
                                        :allow-in true}})
 
+;; Game lobby state
+
 (def game-lobby-state (r/atom {}))
+
+
+;; Flappy-bird state
+
+(def flap-starting-state {:timer-running false
+                          :flappy-start-time 0
+                          :flappy-y 561
+                          :start-time 0})
+(def flap-state (r/atom flap-starting-state))
