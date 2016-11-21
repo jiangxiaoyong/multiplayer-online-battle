@@ -16,7 +16,7 @@
 (def gravity 0.05)
 (def flappy-height 41)
 (def bottom-y 561)
-(def jump-vel 21)
+(def jump-step 11)
 
 (defn px [n]
   (str n "px"))
@@ -25,35 +25,37 @@
   (-> flap-starting-state
       (assoc
           :start-time time-stamp
-          :flappy-start-time time-stamp
+          :jump-start-time time-stamp
           :timer-running true)))
 
-(defn jump [{:keys [cur-time] :as state}]
+(defn jump [{:keys [cur-time jump-count] :as state}]
+  (infof "jump!")
   (-> state
       (assoc
-          :flappy-start-time cur-time
-          :initial-vel jump-vel)))
+          :jump-count (inc jump-count)
+          :jump-start-time cur-time
+          :jump-step jump-step)))
 
 (defn sine-wave [state]
   (assoc state
     :flappy-y
     (+ start-y (* 30 (.sin js/Math (/ (:time-delta state) 300))))))
 
-(defn update-flappy [{:keys [time-delta flappy-y initial-vel] :as state}]
-  (let [cur-vel (- initial-vel (* time-delta gravity))
-        new-y (- flappy-y cur-vel)
-        new-y   (if (> new-y (- bottom-y flappy-height))
-                  (- bottom-y flappy-height)
-                  new-y)]
-    (debugf "time-delt %s cur-vel %s new-y %s" time-delta cur-vel new-y)
-    (assoc state :flappy-y new-y))
-  )
+(defn update-flappy [{:keys [time-delta flappy-y jump-step jump-count] :as state}]
+  (if (pos? jump-count)
+    (let [by-gravity (- jump-step (* time-delta gravity))
+          cur-y (- flappy-y by-gravity)
+          cur-y   (if (> cur-y (- bottom-y flappy-height))
+                    (- bottom-y flappy-height)
+                    cur-y)]
+      (assoc state :flappy-y cur-y))
+    (sine-wave state)))
 
 (defn animation-update [time-stamp state]
   (-> state
       (assoc
           :cur-time time-stamp
-          :time-delta (- time-stamp (:flappy-start-time state)))
+          :time-delta (- time-stamp (:jump-start-time state)))
       update-flappy))
 
 (defn animation-loop [time-stamp]
@@ -66,20 +68,23 @@
   (.requestAnimationFrame
    js/window
    (fn [time-stamp]
-     (infof "Start Game")
+     (infof "Start Game" )
      (reset! flap-state (reset-state time-stamp))
      (animation-loop time-stamp))))
 
 (defn main []
   (fn []
-    (let [{:keys [flappy-y]} @flap-state]
+    (let [{:keys [flappy-y timer-running border-pos]} @flap-state]
       [:div#board-area
        [:div.board {:onMouseDown (fn [e]
                                    (swap! flap-state jump)
                                    (.preventDefault e))}
         [:h1.score]
-        [:a.start-button {:on-click #(start-game)} "START"]
-        [:div.flappy {:style {:top (px flappy-y)}}]]])))
+        (if-not timer-running
+          [:a.start-button {:on-click #(start-game)} "START"]
+          [:span])
+        [:div.flappy {:style {:top (px flappy-y)}}]
+        [:div.scrolling-border {:style {:background-position-x (px border-pos)}}]]])))
 
 (defn flappy-bird []
   (let [{:keys [gaming-in gaming-out]} (gaming-ch)]
