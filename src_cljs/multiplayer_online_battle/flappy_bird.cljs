@@ -17,6 +17,7 @@
 (def flappy-height 41)
 (def bottom-y 561)
 (def jump-step 11)
+(def horiz-vel -0.15)
 
 (defn px [n]
   (str n "px"))
@@ -27,6 +28,19 @@
           :start-time time-stamp
           :jump-start-time time-stamp
           :timer-running true)))
+
+;; background border animation
+
+(defn floor [x] (.floor js/Math x))
+
+(defn translate [start-pos vel time]
+  (floor (+ start-pos (* time vel))))
+
+(defn border [{:keys [cur-time] :as state}]
+  (-> state
+      (assoc :border-pos (mod (translate 0 horiz-vel cur-time) 23))))
+
+;; flappy bird animation
 
 (defn jump [{:keys [cur-time jump-count] :as state}]
   (infof "jump!")
@@ -56,7 +70,8 @@
       (assoc
           :cur-time time-stamp
           :time-delta (- time-stamp (:jump-start-time state)))
-      update-flappy))
+      update-flappy
+      border))
 
 (defn animation-loop [time-stamp]
   (let [new-state (swap! flap-state (partial animation-update time-stamp))]
