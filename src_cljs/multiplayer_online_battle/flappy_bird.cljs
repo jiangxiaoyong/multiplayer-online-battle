@@ -12,35 +12,73 @@
             [multiplayer-online-battle.states :refer [components-state flap-starting-state flap-state]]
             [multiplayer-online-battle.utils :refer [mount-dom]]))
 
-(def start-y 300)
+(def flappy-start-y 300)
 (def gravity 0.05)
 (def flappy-height 41)
-(def bottom-y 561)
+(def ground-y 561)
 (def jump-step 11)
-(def horiz-vel -0.15)
+(def ground-move-speed -0.15)
+(def pillar-spacing 324)
+(def pillar-gap 158)
+(def pillar-width 86)
+
+(defn floor [x] (.floor js/Math x))
+
+(defn translate [start-pos val time]
+  (floor (+ start-pos (* time val))))
 
 (defn px [n]
   (str n "px"))
 
-(defn reset-state [time-stamp]
-  (-> flap-starting-state
-      (assoc
-          :start-time time-stamp
-          :jump-start-time time-stamp
-          :timer-running true)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; pillars animation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn pillar-offset [{:keys [gap-top] :as p}]
+  (assoc p
+    :upper-height gap-top
+    :lower-height (- ground-y gap-top pillar-gap)))
+
+(defn pillar-offsets [state]
+  (update-in state [:pillar-list]
+             (fn [pillar-list]
+               (map pillar-offset pillar-list))))
+
+(defn curr-pillar-pos [cur-time {:keys [pos-x start-time] }]
+  (translate pos-x ground-move-speed (- cur-time start-time)))
+
+(defn new-pillar [cur-time pos-x]
+  {:start-time cur-time
+   :pos-x      pos-x
+   :cur-x      pos-x
+   :gap-top    (+ 60 (rand-int (- flappy-start-y pillar-gap)))})
+
+(defn update-pillars [{:keys [pillar-list cur-time] :as st}]
+  (let [pillars-with-pos (map #(assoc % :cur-x (curr-pillar-pos cur-time %)) pillar-list)
+        pillars-in-world (sort-by
+                          :cur-x
+                          (filter #(> (:cur-x %) (- pillar-width)) pillars-with-pos))]
+    (assoc st
+      :pillar-list
+      (if (< (count pillars-in-world) 3)
+        (conj pillars-in-world
+              (new-pillar
+               cur-time
+               (+ pillar-spacing
+                  (:cur-x (last pillars-in-world)))))
+        pillars-in-world))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; background border animation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn floor [x] (.floor js/Math x))
-
-(defn translate [start-pos vel time]
-  (floor (+ start-pos (* time vel))))
-
-(defn border [{:keys [cur-time] :as state}]
+(defn ground [{:keys [cur-time] :as state}]
   (-> state
-      (assoc :border-pos (mod (translate 0 horiz-vel cur-time) 23))))
+      (assoc :ground-pos (mod (translate 0 ground-move-speed cur-time) 23))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; flappy bird animation
+;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn jump [{:keys [cur-time jump-count] :as state}]
   (infof "jump!")
@@ -53,17 +91,21 @@
 (defn sine-wave [state]
   (assoc state
     :flappy-y
-    (+ start-y (* 30 (.sin js/Math (/ (:time-delta state) 300))))))
+    (+ flappy-start-y (* 30 (.sin js/Math (/ (:time-delta state) 300))))))
 
 (defn update-flappy [{:keys [time-delta flappy-y jump-step jump-count] :as state}]
   (if (pos? jump-count)
     (let [by-gravity (- jump-step (* time-delta gravity))
           cur-y (- flappy-y by-gravity)
-          cur-y   (if (> cur-y (- bottom-y flappy-height))
-                    (- bottom-y flappy-height)
+          cur-y   (if (> cur-y (- ground-y flappy-height))
+                    (- ground-y flappy-height)
                     cur-y)]
       (assoc state :flappy-y cur-y))
     (sine-wave state)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; animation logic per frame
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn animation-update [time-stamp state]
   (-> state
@@ -71,13 +113,23 @@
           :cur-time time-stamp
           :time-delta (- time-stamp (:jump-start-time state)))
       update-flappy
-      border))
+      ;;update-pillars
+      pillar-offsets
+      ground))
 
 (defn animation-loop [time-stamp]
   (let [new-state (swap! flap-state (partial animation-update time-stamp))]
     (when (:timer-running new-state)
       (debugf "new flap-state %s" @flap-state)
       (.requestAnimationFrame js/window animation-loop))))
+
+(defn reset-state [time-stamp]
+  (-> flap-starting-state
+      (update-in [:pillar-list] (fn [pls] (map #(assoc % :start-time time-stamp) pls)))
+      (assoc
+          :start-time time-stamp
+          :jump-start-time time-stamp
+          :timer-running true)))
 
 (defn start-game []
   (.requestAnimationFrame
@@ -87,9 +139,20 @@
      (reset! flap-state (reset-state time-stamp))
      (animation-loop time-stamp))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; React UI
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn pillar [{:keys [cur-x pos-x upper-height lower-height]}]
+  [:div.pillars
+   [:div.pillar.pillar-upper {:style {:left (px cur-x)
+                                       :height upper-height}}]
+   [:div.pillar.pillar-lower {:style {:left (px cur-x)
+                                       :height lower-height}}]])
+
 (defn main []
   (fn []
-    (let [{:keys [flappy-y timer-running border-pos]} @flap-state]
+    (let [{:keys [flappy-y timer-running ground-pos pillar-list]} @flap-state]
       [:div#board-area
        [:div.board {:onMouseDown (fn [e]
                                    (swap! flap-state jump)
@@ -98,8 +161,9 @@
         (if-not timer-running
           [:a.start-button {:on-click #(start-game)} "START"]
           [:span])
+        [:div (map pillar pillar-list)]
         [:div.flappy {:style {:top (px flappy-y)}}]
-        [:div.scrolling-border {:style {:background-position-x (px border-pos)}}]]])))
+        [:div.scrolling-border {:style {:background-position-x (px ground-pos)}}]]])))
 
 (defn flappy-bird []
   (let [{:keys [gaming-in gaming-out]} (gaming-ch)]
