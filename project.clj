@@ -30,14 +30,7 @@
 
                  ;;front-end
                  [reagent "0.6.0"]
-                 [cljs-ajax "0.5.8"]
-
-                 ;;TODO: just for flappy bird demo
-                 [cljsjs/react-dom-server "15.3.1-0"]  ;; for sablono
-                 [cljsjs/react-dom "15.3.1-0"] ;; for sablono
-                 [cljsjs/react "15.3.1-0"] ;; for sablono
-                 [sablono "0.7.5"]
-                 ]
+                 [cljs-ajax "0.5.8"]]
 
   :plugins [[lein-figwheel "0.5.8"]
             [lein-cljsbuild "1.1.4" :exclusions [[org.clojure/clojure]]]
