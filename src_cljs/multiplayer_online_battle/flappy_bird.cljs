@@ -2,6 +2,8 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! chan sliding-buffer put! close! timeout]]
             [clojure.string :as str]
+            [goog.events.KeyCodes :as KeyCodes]
+            [goog.events :as events]
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
@@ -16,9 +18,9 @@
 (def flappy-height 41)
 (def ground-y 561)
 (def jump-step 7)
-(def ground-move-speed -0.15)
-(def pillar-spacing 390)
-(def pillar-gap 180)
+(def ground-move-speed -0.20)
+(def pillar-spacing 310)
+(def pillar-gap 170)
 (def pillar-width 86)
 
 (defn floor [x] (.floor js/Math x))
@@ -34,7 +36,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn score [{:keys [cur-time start-time] :as st}]
-  (let [score (- (.abs js/Math (floor (/ (- (* (- cur-time start-time) ground-move-speed) 800)
+  (let [score (- (.abs js/Math (floor (/ (- (* (- cur-time start-time) ground-move-speed) 550)
                                pillar-spacing)))
                  4)]
   (assoc st :score (if (neg? score) 0 score))))
@@ -84,17 +86,17 @@
   {:start-time cur-time
    :start-pos-x start-pos-x
    :cur-x      start-pos-x
-   :gap-top    (+ 100 (rand-int (- flappy-start-y pillar-gap)))})
+   :gap-top    (+ 150 (rand-int (- flappy-start-y pillar-gap)))})
 
 (defn update-pillars-list [{:keys [pillar-list cur-time] :as st}]
   (let [pillars-with-pos (map #(assoc % :cur-x (curr-pillar-pos cur-time %)) pillar-list)
         pillars-in-world (sort-by
                           :cur-x
                           (filter #(> (:cur-x %) (- pillar-width)) pillars-with-pos))]
-    (infof "pillars in world %s" pillars-in-world)
+    ;;(infof "pillars in world %s" pillars-in-world)
     (assoc st
       :pillar-list
-      (if (< (count pillars-in-world) 3)
+      (if (< (count pillars-in-world) 4)
         (conj pillars-in-world
               (new-pillar
                cur-time
@@ -156,12 +158,21 @@
 (defn animation-loop [time-stamp]
   (let [new-state (swap! flap-state (partial animation-update time-stamp))]
     (when (:timer-running new-state)
-      (debugf "new flap-state %s" @flap-state)
+      ;;(debugf "new flap-state %s" @flap-state)
       (.requestAnimationFrame js/window animation-loop))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Gaming control
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn keydown [e]
+  (condp = (.-keyCode e)
+    KeyCodes/UP (swap! flap-state jump)
+    nil))
+
+(defonce listener
+  (events/listen js/document "keydown" keydown))
+
 
 (defn reset-state [time-stamp]
   (-> flap-starting-state
@@ -184,19 +195,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn pillar [{:keys [cur-x upper-height lower-height]}]
+  ^{:key cur-x}
   [:div.pillars
    [:div.pillar.pillar-upper {:style {:left (px cur-x)
                                        :height upper-height}}]
    [:div.pillar.pillar-lower {:style {:left (px cur-x)
-                                       :height lower-height}}]])
+          
+                             :height lower-height}}]])
 
 (defn main []
   (fn []
     (let [{:keys [flappy-y timer-running ground-pos pillar-list score]} @flap-state]
       [:div#board-area
-       [:div.board {:onMouseDown (fn [e]
-                                   (swap! flap-state jump)
-                                   (.preventDefault e))}
+       [:div.board 
         [:h1.score score]
         (if-not timer-running
           [:a.start-button {:on-click #(start-game)} "START"]
