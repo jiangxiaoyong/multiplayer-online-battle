@@ -40,8 +40,8 @@
                           :jump-count 0
                           :pillar-list
                           [{:start-time 0
-                            :start-pos-x 900
-                            :cur-x 900
+                            :start-x 1200
+                            :cur-x 1200
                             :gap-top 200 }]})
 
 (def flap-state (r/atom flap-starting-state))

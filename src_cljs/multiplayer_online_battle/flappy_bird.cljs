@@ -17,7 +17,7 @@
 (def ground-y 561)
 (def jump-step 7)
 (def ground-move-speed -0.15)
-(def pillar-spacing 324)
+(def pillar-spacing 390)
 (def pillar-gap 180)
 (def pillar-width 86)
 
@@ -34,7 +34,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn score [{:keys [cur-time start-time] :as st}]
-  (let [score (- (.abs js/Math (floor (/ (- (* (- cur-time start-time) ground-move-speed) 544)
+  (let [score (- (.abs js/Math (floor (/ (- (* (- cur-time start-time) ground-move-speed) 800)
                                pillar-spacing)))
                  4)]
   (assoc st :score (if (neg? score) 0 score))))
