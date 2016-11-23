@@ -24,8 +24,8 @@
 
 (defn floor [x] (.floor js/Math x))
 
-(defn translate [start-pos val time]
-  (floor (+ start-pos (* time val))))
+(defn translate [start-pos ground-move-speed time]
+  (floor (+ start-pos (* ground-move-speed time))))
 
 (defn px [n]
   (str n "px"))
@@ -34,30 +34,31 @@
 ;; pillars animation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn pillar-offset [{:keys [gap-top] :as p}]
+(defn pillars-pair-height [{:keys [gap-top] :as p}]
   (assoc p
     :upper-height gap-top
     :lower-height (- ground-y gap-top pillar-gap)))
 
-(defn pillar-offsets [state]
+(defn update-pillars-pair-height [state]
   (update-in state [:pillar-list]
              (fn [pillar-list]
-               (map pillar-offset pillar-list))))
+               (map pillars-pair-height pillar-list))))
 
-(defn curr-pillar-pos [cur-time {:keys [pos-x start-time] }]
-  (translate pos-x ground-move-speed (- cur-time start-time)))
+(defn curr-pillar-pos [cur-time {:keys [start-pos-x start-time] }]
+  (translate start-pos-x ground-move-speed (- cur-time start-time)))
 
-(defn new-pillar [cur-time pos-x]
+(defn new-pillar [cur-time start-pos-x]
   {:start-time cur-time
-   :pos-x      pos-x
-   :cur-x      pos-x
-   :gap-top    (+ 60 (rand-int (- flappy-start-y pillar-gap)))})
+   :start-pos-x start-pos-x
+   :cur-x      start-pos-x
+   :gap-top    (+ 100 (rand-int (- flappy-start-y pillar-gap)))})
 
-(defn update-pillars [{:keys [pillar-list cur-time] :as st}]
+(defn update-pillars-list [{:keys [pillar-list cur-time] :as st}]
   (let [pillars-with-pos (map #(assoc % :cur-x (curr-pillar-pos cur-time %)) pillar-list)
         pillars-in-world (sort-by
                           :cur-x
                           (filter #(> (:cur-x %) (- pillar-width)) pillars-with-pos))]
+    (infof "pillars in world %s" pillars-in-world)
     (assoc st
       :pillar-list
       (if (< (count pillars-in-world) 3)
@@ -113,8 +114,8 @@
           :cur-time time-stamp
           :time-delta (- time-stamp (:jump-start-time state)))
       update-flappy
-      ;;update-pillars
-      pillar-offsets
+      update-pillars-list
+      update-pillars-pair-height
       ground))
 
 (defn animation-loop [time-stamp]
@@ -143,7 +144,7 @@
 ;; React UI
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn pillar [{:keys [cur-x pos-x upper-height lower-height]}]
+(defn pillar [{:keys [cur-x upper-height lower-height]}]
   [:div.pillars
    [:div.pillar.pillar-upper {:style {:left (px cur-x)
                                        :height upper-height}}]

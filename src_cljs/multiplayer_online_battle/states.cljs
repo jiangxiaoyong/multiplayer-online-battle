@@ -39,8 +39,8 @@
                           :jump-step 0
                           :jump-count 0
                           :pillar-list
-                          [{ :start-time 0
-                            :pos-x 900
+                          [{:start-time 0
+                            :start-pos-x 900
                             :cur-x 900
                             :gap-top 200 }]})
 
