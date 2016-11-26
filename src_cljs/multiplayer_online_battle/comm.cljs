@@ -39,9 +39,8 @@
             {:as evmsg :keys [id ?data]} ev-msg]
         (cond
          (= id :chsk/state) (let [[old-state-map new-state-map] ?data]
-                              (if (:first-open? new-state-map)
-                                (infof "Channel socket succuessfully established! %s" new-state-map)
-                                (infof "Channel socket state change: %s" new-state-map)))
+                              (when (:first-open? new-state-map)
+                                (infof "Channel socket succuessfully established! %s" new-state-map)))
          (= id :chsk/handshake) (let [[?uid ?handshake-data] ?data]
                                   (infof "Handshake: %s" ?data))
          (= id :chsk/recv) (let [ev-type (first ?data)

@@ -11,7 +11,16 @@
             [multiplayer-online-battle.synchronization :refer [synchronize-game-lobby]]
             [multiplayer-online-battle.websocket :as ws]))
 
-;;;;;;;;;;;;;;;;;;;;;;;; Game Lobby events handler
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Gaming events handler
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn process-cmd-msg [{:as ev-msg :keys [?data uid]}]
+  (log/info "Receiving msg" ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Game Lobby events handler
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn init-game-lobby-state []
   (swap! players assoc-in [:all-players-ready] false))
@@ -56,10 +65,12 @@
     (every? #(if (:ready? %) true false) (vals (:all-players @players)))
     false))
 
-(defn ready-to-gaming []
+(defn ready-to-gaming? []
   (if (check-all-players-ready) (pre-enter-game)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;; landing page event handler
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; landing page event handler
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn register-player [{:as ev-msg :keys [id uid client-id ?data]}]
   (log/info "id:" id)
@@ -70,10 +81,17 @@
     (log/info "player %s already exist!" uid)
     (swap! players update-in [:all-players] (fn [existing new] (into {} (conj existing new))) {(keyword uid) {:client-id client-id :user-name uid :avatar-img (str (rand-int 8) ".png") :ready? false}})))
 
-(defn return-player-info [{:as ev-msg :keys [uid client-id]}]
-  (ws/send-fn uid [:game-lobby/player-current {:payload ((keyword uid) (:all-players @players))}]))
+(defn return-player-info [ev-type]
+  (fn [uid]
+   (ws/send-fn uid [ev-type {:payload ((keyword uid) (:all-players @players))}])))
 
-;;----------- Sente events handler-------------
+(def return-player-info-gl (return-player-info :game-lobby/player-current))
+(def return-player-info-gaming (return-player-info :gaming/player-current))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Sente events handler
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defmulti event :id)
 
 (defmethod event :default
@@ -90,11 +108,13 @@
   (log/info "data" ?data)
   (log/info "event" event))
 
+;; game-looby events
+
 (defmethod event :game-lobby/register
   [{:as ev-msg}]
   (log/info "register player")
   (register-player ev-msg)  
-  (return-player-info ev-msg)
+  (return-player-info-gl (:uid ev-msg))
   (add-watch players :lobby-state fire-game-lobby-sync))
 
 (defmethod event :game-lobby/lobby-state?
@@ -105,9 +125,22 @@
   [{:as ev-msg :keys [client-id uid ?data]}]
   (log/info "player %s is ready now!" uid)
   (swap! players update-in [:all-players (keyword uid) :ready?] not)
-  (ready-to-gaming))
+  (ready-to-gaming?))
 
-;;------------Set up Sente events router-------------
+;; gaming events
+
+(defmethod event :gaming/get-player-info
+  [{:as ev-msg}]
+  (return-player-info-gaming (:uid ev-msg)))
+
+(defmethod event :gaming/cmd
+  [{:as ev-msg}]
+  (process-cmd-msg ev-msg))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Set up Sente events router
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defonce event-router (atom nil))
 
 (defn stop-events-router []

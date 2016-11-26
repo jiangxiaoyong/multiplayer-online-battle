@@ -1,6 +1,6 @@
 (ns multiplayer-online-battle.flappy-bird
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [cljs.core.async :refer [<! chan sliding-buffer put! close! timeout]]
+  (:require [cljs.core.async :refer [<! >! chan sliding-buffer put! close! timeout]]
             [clojure.string :as str]
             [goog.events.KeyCodes :as KeyCodes]
             [goog.events :as events]
@@ -36,7 +36,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn score [{:keys [cur-time start-time] :as st}]
-  (let [score (- (.abs js/Math (floor (/ (- (* (- cur-time start-time) ground-move-speed) 550)
+  (let [score (- (.abs js/Math (floor (/ (- (* (- cur-time start-time) ground-move-speed) 2200)
                                pillar-spacing)))
                  4)]
   (assoc st :score (if (neg? score) 0 score))))
@@ -167,12 +167,14 @@
 
 (defn keydown [e]
   (condp = (.-keyCode e)
-    KeyCodes/UP (swap! flap-state jump)
+    KeyCodes/UP (do
+                  (swap! flap-state jump)
+                  ;;(>! gaming-out [:gaming/cmd {:payload {:uid 123 :cmd (.keyCode e)}}])
+                  )
     nil))
 
 (defonce listener
   (events/listen js/document "keydown" keydown))
-
 
 (defn reset-state [time-stamp]
   (-> flap-starting-state
@@ -191,6 +193,17 @@
      (animation-loop time-stamp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; handle events message
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn handle-ev-msg [ev-msg]
+  (let [ev-type (first ev-msg)
+        payload (:payload (second ev-msg))]
+    (cond
+     (= :gaming/uid ev-type) (infof "gaming/uid"))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; React UI
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -198,16 +211,15 @@
   ^{:key cur-x}
   [:div.pillars
    [:div.pillar.pillar-upper {:style {:left (px cur-x)
-                                       :height upper-height}}]
+                                      :height upper-height}}]
    [:div.pillar.pillar-lower {:style {:left (px cur-x)
-          
-                             :height lower-height}}]])
+                                      :height lower-height}}]])
 
 (defn main []
   (fn []
     (let [{:keys [flappy-y timer-running ground-pos pillar-list score]} @flap-state]
       [:div#board-area
-       [:div.board 
+       [:div.board
         [:h1.score score]
         (if-not timer-running
           [:a.start-button {:on-click #(start-game)} "START"]
@@ -217,19 +229,25 @@
         [:div.scrolling-border {:style {:background-position-x (px ground-pos)}}]]])))
 
 (defn flappy-bird []
-  (let [{:keys [gaming-in gaming-out]} (gaming-ch)]
-    (r/create-class
-     {:componnet-will-mount (fn [_]
-                              (log "flappy bird will mount"))
-      :component-did-mount (fn [_]
-                             (go-loop []
-                               (let [ev-msg (<! gaming-in)]
-                                 (debugf "gaming receiving %s" ev-msg))
-                               (recur))
-                             (log "flappy bird did mount"))
-      :component-will-unmount (fn [_] (log "flappy bird will unmount"))
-      :reagent-render (fn []
-                        [main])})))
+  (r/create-class
+   {:componnet-will-mount (fn [_]
+                            (log "flappy bird will mount!"))
+    :component-did-mount (fn [_]
+                           (let [{:keys [gaming-in gaming-out]} (gaming-ch)]
+                              (def gaming-in gaming-in)
+                              (def gaming-out gaming-out))
+                           (go
+                             (debugf "sending")
+                             (>! gaming-out [:gaming/get-player-info {:playload "info myself"}]))
+                           (go-loop []
+                             (let [ev-msg (<! gaming-in)]
+                               (debugf "gaming receiving %s" ev-msg)
+                               (handle-ev-msg ev-msg))
+                             (recur))
+                           (log "flappy bird did mount"))
+    :component-will-unmount (fn [_] (log "flappy bird will unmount"))
+    :reagent-render (fn []
+                      [main])}))
 
 (defn fig-reload []
   (.log js/console "figwheel reloaded! ")
