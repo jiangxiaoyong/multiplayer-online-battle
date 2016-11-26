@@ -11,7 +11,7 @@
 
 (enable-console-print!)
 
-(def game-lobby-state (r/atom {}))
+(def game-lobby-state (r/atom {:all-players-ready false}))
 
 (defn init-game-lobby-state []
   (swap! game-lobby-state assoc-in [:all-players-ready] false))
@@ -102,22 +102,21 @@
 (defn game-lobby []
   (let [{:keys [game-lobby-in game-lobby-out]} (game-lobby-ch)]
     (r/create-class
-     {:componnet-will-mount (fn [_]
-                              (log "game lobby will mount"))
-      :component-did-mount (fn [_]
-                             (init-game-lobby-state)
-                             (go
+     {:reagent-render (fn []
+                        [main game-lobby-in game-lobby-out])
+      :component-will-mount (fn [_]
+                              (log "game lobby will mount")
+                              ;;(init-game-lobby-state)
+                              (go
                                (>! game-lobby-out [:game-lobby/register {:payload "I am new player"}])
-                               (>! game-lobby-out [:game-lobby/lobby-state? {:payload "I want all players status"}])) 
+                               (>! game-lobby-out [:game-lobby/lobby-state? {:payload "I want all players status"}])))
+      :component-did-mount (fn [_]
+                             (log "game lobby did mount")
                              (go-loop []
                                (let [ev-msg (<! game-lobby-in)]
                                  (debugf "game looby receiving: %s" ev-msg)
                                  (handle-ev-msg ev-msg))
-                               (recur))
-                             (log "game lobby did mount"))
-      :component-will-unmount (fn [_] (log "game loby will unmount"))
-      :reagent-render (fn []
-                        [main game-lobby-in game-lobby-out])})))
+                               (recur)))})))
 
 (defn fig-reload []
   (.log js/console "game lobby figwheel reloaded! ")

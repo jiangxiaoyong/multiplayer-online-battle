@@ -80,7 +80,7 @@
                            :open-urls ["http://localhost:8080/gamelobby.html"]}
 
                 :compiler {:main multiplayer-online-battle.game-lobby
-                           :asset-path "js/compiled/out_landing"
+                           :asset-path "js/compiled/out_game_lobby"
                            :output-to "resources/public/js/compiled/multiplayer_online_battle_game_lobby.js"
                            :output-dir "resources/public/js/compiled/out_game_lobby"
                            :source-map-timestamp true
