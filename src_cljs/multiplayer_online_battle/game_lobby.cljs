@@ -84,7 +84,7 @@
         [:span "Status"]]]]
      [:tbody      
       (for [player (vals (:players-all @game-lobby-state))]
-        ^{:key (.getTime (js/Date.))} [player-info player])]]))
+        ^{:key (:time-stamp player)} [player-info player])]]))
 
 (defn main [game-lobby-in game-lobby-out]
   (fn []

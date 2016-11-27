@@ -24,7 +24,8 @@
 (defn select-player [uid]
   (->  @players
        (:all-players)
-       (select-keys [(num->keyword uid)])))
+       ;;(select-keys [(num->keyword uid)])
+       ((num->keyword uid))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Gaming events handler

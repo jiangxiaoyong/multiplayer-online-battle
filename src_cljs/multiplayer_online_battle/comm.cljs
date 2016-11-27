@@ -62,10 +62,8 @@
       (let [[data ch] (alts! [ws->lobby game-lobby-out])]
         (cond
          (= ch ws->lobby) (do
-                            (infof "game lobby channel receiving %s" data)
                             (>! game-lobby-in data))
          (= ch game-lobby-out) (do
-                            (infof "game lobby channel sending data %s" data)
                             (send-fn data))))
       (recur))
     {:game-lobby-in game-lobby-in
@@ -80,10 +78,8 @@
       (let [[data ch] (alts! [ws->gaming gaming-out])]
         (cond
          (= ch ws->gaming) (do
-                            (infof "gaming channel receiving %s" data)
                             (>! gaming-in data))
          (= ch gaming-out) (do
-                            (infof "gaming channel sending data %s" data)
                             (send-fn data))))
       (recur))
     {:gaming-in gaming-in

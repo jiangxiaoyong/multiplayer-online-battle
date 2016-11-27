@@ -26,7 +26,7 @@
   (log/info "uid = " uid "user-name" user-name)
   (if (contains? (:all-players @players) (keyword uid))
     (log/info "player %s already exist!" uid)
-    (swap! players update-in [:all-players] (fn [existing new] (into {} (conj existing new))) {(keyword (str uid)) {:user-name user-name :avatar-img (str (rand-int 8) ".png") :ready? false}})))
+    (swap! players update-in [:all-players] (fn [existing new] (into {} (conj existing new))) {(keyword (str uid)) {:user-name user-name :time-stamp uid :avatar-img (str (rand-int 8) ".png") :ready? false}})))
 
 (defn login-handler [req]
   (if-not (check-all-players-ready)
