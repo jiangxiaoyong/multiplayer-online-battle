@@ -84,7 +84,7 @@
         [:span "Status"]]]]
      [:tbody      
       (for [player (vals (:players-all @game-lobby-state))]
-        ^{:key (:client-id player)} [player-info player])]]))
+        ^{:key (.getTime (js/Date.))} [player-info player])]]))
 
 (defn main [game-lobby-in game-lobby-out]
   (fn []
@@ -106,10 +106,9 @@
                         [main game-lobby-in game-lobby-out])
       :component-will-mount (fn [_]
                               (log "game lobby will mount")
-                              ;;(init-game-lobby-state)
                               (go
-                               (>! game-lobby-out [:game-lobby/register {:payload "I am new player"}])
-                               (>! game-lobby-out [:game-lobby/lobby-state? {:payload "I want all players status"}])))
+                               (>! game-lobby-out [:game-lobby/sub-ev {:payload ""}])
+                               (>! game-lobby-out [:game-lobby/lobby-state? {:payload ""}])))
       :component-did-mount (fn [_]
                              (log "game lobby did mount")
                              (go-loop []

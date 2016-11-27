@@ -13,8 +13,7 @@
             [multiplayer-online-battle.synchronization :refer [synchronize-game-lobby]]
             [multiplayer-online-battle.game-state :refer [players]]
             [multiplayer-online-battle.events-router :refer [check-all-players-ready]]
-            [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            ))
+            [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]))
 
 ;;---------- Routing handlers--------------
 
@@ -23,14 +22,20 @@
    (response/resource-response "public/index.html")
    "text/html"))
 
+(defn login-player [uid user-name]
+  (log/info "uid = " uid "user-name" user-name)
+  (if (contains? (:all-players @players) (keyword uid))
+    (log/info "player %s already exist!" uid)
+    (swap! players update-in [:all-players] (fn [existing new] (into {} (conj existing new))) {(keyword (str uid)) {:user-name user-name :avatar-img (str (rand-int 8) ".png") :ready? false}})))
+
 (defn login-handler [req]
   (if-not (check-all-players-ready)
     (let [{:keys [session params]} req
-          {:keys [user-name]} params]
-      (debugf "login params: %s " params)
-      (debugf "login session %s " session )
-      (debugf "login user name %s " user-name)
-      {:status 200 :session (assoc session :uid user-name)})
+          {:keys [user-name]} params
+          uid (System/currentTimeMillis)]
+      (log/info "login user = " user-name)
+      (login-player uid user-name)
+      {:status 200 :session (assoc session :uid uid)})
     {:status 409 :body {:msg "battle in progress"}}))
 
 (defn game-lobby-handler [req]

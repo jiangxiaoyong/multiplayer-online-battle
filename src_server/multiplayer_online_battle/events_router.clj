@@ -11,6 +11,21 @@
             [multiplayer-online-battle.synchronization :refer [synchronize-game-lobby]]
             [multiplayer-online-battle.websocket :as ws]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; common
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn payload [data]
+  {:payload data})
+
+(defn num->keyword [uid]
+  (keyword (str uid)))
+
+(defn select-player [uid]
+  (->  @players
+       (:all-players)
+       (select-keys [(num->keyword uid)])))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Gaming events handler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -72,18 +87,9 @@
 ;; landing page event handler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn register-player [{:as ev-msg :keys [id uid client-id ?data]}]
-  (log/info "id:" id)
-  (log/info "uid:" uid)
-  (log/info "client-id:" client-id)
-  (log/info "data" ?data)
-  (if (contains? (:all-players @players) (keyword uid))
-    (log/info "player %s already exist!" uid)
-    (swap! players update-in [:all-players] (fn [existing new] (into {} (conj existing new))) {(keyword uid) {:client-id client-id :user-name uid :avatar-img (str (rand-int 8) ".png") :ready? false}})))
-
 (defn return-player-info [ev-type]
   (fn [uid]
-   (ws/send-fn uid [ev-type {:payload ((keyword uid) (:all-players @players))}])))
+    (ws/send-fn uid [ev-type (payload (select-player uid))])))
 
 (def return-player-info-gl (return-player-info :game-lobby/player-current))
 (def return-player-info-gaming (return-player-info :gaming/player-current))
@@ -110,21 +116,19 @@
 
 ;; game-looby events
 
-(defmethod event :game-lobby/register
+(defmethod event :game-lobby/sub-ev
   [{:as ev-msg}]
-  (log/info "register player")
-  (register-player ev-msg)  
-  (return-player-info-gl (:uid ev-msg))
   (add-watch players :lobby-state fire-game-lobby-sync))
 
 (defmethod event :game-lobby/lobby-state?
   [{:as ev-msg :keys [uid]}]
+  (return-player-info-gl uid)
   (ws/send-fn uid [:game-lobby/players-all {:payload (:all-players @players)}]))
 
 (defmethod event :game-lobby/player-ready
   [{:as ev-msg :keys [client-id uid ?data]}]
   (log/info "player %s is ready now!" uid)
-  (swap! players update-in [:all-players (keyword uid) :ready?] not)
+  (swap! players update-in [:all-players (num->keyword uid) :ready?] not)
   (ready-to-gaming?))
 
 ;; gaming events
