@@ -11,6 +11,8 @@
             [multiplayer-online-battle.states :refer [components-state flap-starting-state flap-state]]
             [multiplayer-online-battle.utils :refer [mount-dom]]))
 
+(enable-console-print!)
+
 (def flappy-start-y 300)
 (def gravity 0.02)
 (def flappy-x 212)
@@ -230,24 +232,23 @@
 
 (defn flappy-bird []
   (r/create-class
-   {:componnet-will-mount (fn [_]
-                            (log "flappy bird will mount!"))
-    :component-did-mount (fn [_]
-                           (let [{:keys [gaming-in gaming-out]} (gaming-ch)]
+   {:reagent-render (fn []
+                      [main])
+    :component-will-mount (fn []
+                            (log "gaming will mount")
+                            (let [{:keys [gaming-in gaming-out]} (gaming-ch)]
                               (def gaming-in gaming-in)
                               (def gaming-out gaming-out))
-                           (go
+                            (go
                              (debugf "sending")
-                             (>! gaming-out [:gaming/get-player-info {:playload "info myself"}]))
+                             (>! gaming-out [:gaming/get-player-info {:playload "info myself"}])))
+    :component-did-mount (fn []
+                           (log "gaming did mount")
                            (go-loop []
                              (let [ev-msg (<! gaming-in)]
                                (debugf "gaming receiving %s" ev-msg)
                                (handle-ev-msg ev-msg))
-                             (recur))
-                           (log "flappy bird did mount"))
-    :component-will-unmount (fn [_] (log "flappy bird will unmount"))
-    :reagent-render (fn []
-                      [main])}))
+                             (recur)))}))
 
 (defn fig-reload []
   (.log js/console "figwheel reloaded! ")
