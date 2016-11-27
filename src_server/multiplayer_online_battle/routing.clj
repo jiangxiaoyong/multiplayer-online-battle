@@ -13,9 +13,12 @@
             [multiplayer-online-battle.synchronization :refer [synchronize-game-lobby]]
             [multiplayer-online-battle.game-state :refer [players]]
             [multiplayer-online-battle.events-router :refer [check-all-players-ready]]
+            [multiplayer-online-battle.utils :as utils]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]))
 
-;;---------- Routing handlers--------------
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Routing handlers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn home-pg-handler [_]
   (response/content-type 
@@ -23,12 +26,13 @@
    "text/html"))
 
 (defn login-player [uid user-name]
-  (log/info "uid = " uid "user-name" user-name)
-  (if (contains? (:all-players @players) (keyword uid))
+  (log/info "login-player uid = " uid "user-name" user-name)
+  (if (contains? (:all-players @players) (utils/num->keyword uid))
     (log/info "player %s already exist!" uid)
-    (swap! players update-in [:all-players] (fn [existing new] (into {} (conj existing new))) {(keyword (str uid)) {:user-name user-name :time-stamp uid :avatar-img (str (rand-int 8) ".png") :ready? false}})))
+    (swap! players update-in [:all-players] (fn [existing new] (into {} (conj existing new))) {(utils/num->keyword uid) (utils/create-player user-name)})))
 
 (defn login-handler [req]
+  (log/info "check-all-status" (check-all-players-ready))
   (if-not (check-all-players-ready)
     (let [{:keys [session params]} req
           {:keys [user-name]} params
@@ -48,7 +52,10 @@
    (response/resource-response "public/gaming.html")
    "text/html"))
 
-;;---------- Define routing ----------------
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Define routing
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defroutes all-routes
   (GET  "/"     req (home-pg-handler req))
   (GET  "/chsk" req (ws/ajax-get-or-ws-handshake-fn req))

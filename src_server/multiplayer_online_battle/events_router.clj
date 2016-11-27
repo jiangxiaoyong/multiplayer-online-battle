@@ -9,23 +9,8 @@
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.game-state :refer [players]]
             [multiplayer-online-battle.synchronization :refer [synchronize-game-lobby]]
-            [multiplayer-online-battle.websocket :as ws]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; common
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn payload [data]
-  {:payload data})
-
-(defn num->keyword [uid]
-  (keyword (str uid)))
-
-(defn select-player [uid]
-  (->  @players
-       (:all-players)
-       ;;(select-keys [(num->keyword uid)])
-       ((num->keyword uid))))
+            [multiplayer-online-battle.websocket :as ws]
+            [multiplayer-online-battle.utils :as utils]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Gaming events handler
@@ -90,7 +75,7 @@
 
 (defn return-player-info [ev-type]
   (fn [uid]
-    (ws/send-fn uid [ev-type (payload (select-player uid))])))
+    (ws/send-fn uid [ev-type (utils/payload (utils/select-player uid))])))
 
 (def return-player-info-gl (return-player-info :game-lobby/player-current))
 (def return-player-info-gaming (return-player-info :gaming/player-current))
