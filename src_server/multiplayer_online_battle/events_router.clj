@@ -69,16 +69,8 @@
 (defn ready-to-gaming? []
   (if (check-all-players-ready) (pre-enter-game)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; landing page event handler
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn return-player-info [ev-type]
-  (fn [uid]
-    (ws/send-fn uid [ev-type (utils/payload (utils/select-player uid))])))
-
-(def return-player-info-gl (return-player-info :game-lobby/player-current))
-(def return-player-info-gaming (return-player-info :gaming/player-current))
+(defn return-info [uid payload]
+  (utils/send-fn uid payload))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sente events handler
@@ -108,8 +100,10 @@
 
 (defmethod event :game-lobby/lobby-state?
   [{:as ev-msg :keys [uid]}]
-  (return-player-info-gl uid)
-  (ws/send-fn uid [:game-lobby/players-all {:payload (:all-players @players)}]))
+  (let [ev-player-cur (partial utils/ev-msg :game-lobby/player-current)
+        ev-all-players (partial utils/ev-msg :game-lobby/players-all)]
+    (return-info uid (ev-player-cur (utils/select-player uid)))
+    (return-info uid (ev-all-players (utils/all-players)))))
 
 (defmethod event :game-lobby/player-ready
   [{:as ev-msg :keys [client-id uid ?data]}]

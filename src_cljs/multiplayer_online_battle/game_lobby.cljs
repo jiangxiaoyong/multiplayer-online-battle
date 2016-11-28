@@ -107,8 +107,8 @@
       :component-will-mount (fn [_]
                               (log "game lobby will mount")
                               (go
-                               (>! game-lobby-out [:game-lobby/sub-ev {:payload ""}])
-                               (>! game-lobby-out [:game-lobby/lobby-state? {:payload ""}])))
+                               (>! game-lobby-out [:game-lobby/sub-ev])
+                               (>! game-lobby-out [:game-lobby/lobby-state?])))
       :component-did-mount (fn [_]
                              (log "game lobby did mount")
                              (go-loop []

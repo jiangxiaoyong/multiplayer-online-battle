@@ -3,12 +3,13 @@
   (:require 
    [clojure.tools.logging :as log]
    [clojure.pprint :refer [pprint]]
-   [multiplayer-online-battle.game-state :refer [players]]))
+   [multiplayer-online-battle.game-state :refer [players]]
+   [multiplayer-online-battle.websocket :as ws]))
 
 (defn num->keyword [uid]
   (keyword (str uid)))
 
-(defn payload [data]
+(defn- wrap-payload [data]
   {:payload data})
 
 (defn select-player [uid]
@@ -43,3 +44,15 @@
         player-map {}
         player (player-init-state player-map img ready? time)]
     (player name)))
+
+(defn all-players []
+  (-> @players
+      (:all-players)))
+
+(defn ev-msg [ev-type data]
+  (->> data
+       (wrap-payload)
+       (vector ev-type)))
+
+(defn send-fn [uid ev]
+  (ws/send-fn uid ev))
