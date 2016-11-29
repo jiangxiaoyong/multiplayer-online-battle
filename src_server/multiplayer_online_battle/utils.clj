@@ -3,6 +3,7 @@
   (:require 
    [clojure.tools.logging :as log]
    [clojure.pprint :refer [pprint]]
+   [clojure.data :refer [diff]]
    [multiplayer-online-battle.game-state :refer [players]]
    [multiplayer-online-battle.websocket :as ws]))
 
@@ -56,3 +57,7 @@
 
 (defn send-fn [uid ev]
   (ws/send-fn uid ev))
+
+(defn ev-data-map [ev-type data]
+  {:ev-type ev-type
+   :data data})

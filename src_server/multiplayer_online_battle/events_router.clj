@@ -23,31 +23,27 @@
 ;; Game Lobby events handler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn init-game-lobby-state []
-  (swap! players assoc-in [:all-players-ready] false))
-
 (defn reset-game []
   (reset! players {})
   (init-game-lobby-state))
 
 (defn check-game-lobby-state [old new]
   (let [new-players-count (count (keys (:all-players new)))
-        old-players-count (count (keys (:all-players old)))]
+        old-players-count (count (keys (:all-players old)))
+        changed-map (second (diff old new))
+        changed-entry (first (vals changed-map))]
     (cond
-     (> new-players-count old-players-count) {:ev-type :game-lobby/player-come
-                                              :data (:all-players (second (diff old new)))}
-     (< new-players-count old-players-count) {:ev-type :game-looby/player-leave
-                                              :data (:all-players (first (diff old new)))}
+     (> new-players-count old-players-count) (utils/ev-data-map :game-lobby/player-come changed-entry)
+     (< new-players-count old-players-count) (utils/ev-data-map :game-lobby-leave (log/info "player leave"))
      (and (= new-players-count old-players-count)
-          (contains? (second (diff old new)) :all-players-ready)) {:ev-type :game-lobby/all-players-ready
-                                                                   :data {:all-players-ready (:all-players-ready @players)}}
+          (contains? changed-map :all-players-ready)) (utils/ev-data-map :game-lobby/all-players-ready {:all-players-ready (:abbll-players-ready @players)})
      (and (= new-players-count old-players-count)
-          (contains? (second (diff old new)) :all-players)) {:ev-type :game-lobby/player-update
-                                                             :data (:all-players (second (diff old new)))})))
+          (contains? changed-map :all-players)) (utils/ev-data-map :game-lobby/player-update changed-entry))))
 
 (defn fire-game-lobby-sync 
   [key watched old new]
   (when-not (= old new)
+    (newline)
     (log/info "old lobby state === " old)
     (log/info "new lobby state === " new)
     (let [{:keys [ev-type data]} (check-game-lobby-state old new)]
@@ -134,5 +130,4 @@
 (defn start-events-router []
   (log/info "Starting socket event router...")
   (stop-events-router)
-  (init-game-lobby-state)
   (reset! event-router (sente/start-chsk-router! ws/ch-recv event)))
