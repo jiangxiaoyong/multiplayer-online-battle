@@ -21,14 +21,16 @@
                                                :btn-ready-animated "fa fa-circle-o-notch fa-spin"
                                                :btn-unready "btn btn-success btn-lg btn-block"
                                                :btn-unready-label "Ready"
-                                               }} 
+                                               }
+                                       :player-status{:ready 0
+                                                      :unready 1
+                                                      :gaming 2}} 
                           :landing-pg {:animate "animated fadeInDown"
                                        :allow-in true}})
 
 ;; Game lobby state
 
 (def game-lobby-state (r/atom {}))
-
 
 ;; Flappy-bird state
 

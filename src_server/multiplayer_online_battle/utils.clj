@@ -7,6 +7,11 @@
    [multiplayer-online-battle.game-state :refer [players]]
    [multiplayer-online-battle.websocket :as ws]))
 
+(def player-status
+  {:ready 0
+   :unready 1
+   :gaming 2})
+
 (defn num->keyword [uid]
   (keyword (str uid)))
 
@@ -21,8 +26,8 @@
 (defn- avatar [player img]
   (assoc player :avatar-img img))
 
-(defn- ready? [player status]
-  (assoc player :ready? status))
+(defn- status? [player status]
+  (assoc player :status status))
 
 (defn- time-stamp [player time]
   (assoc player :time-stamp time))
@@ -34,16 +39,16 @@
   (fn [name]
     (-> player
         (avatar img)
-        (ready? status)
+        (status? status)
         (time-stamp time)
         (user-name name))))
 
 (defn create-player [name]
   (let [img (str (rand-int 8) ".png")
-        ready? false
+        status (:unready player-status)
         time (System/currentTimeMillis)
         player-map {}
-        player (player-init-state player-map img ready? time)]
+        player (player-init-state player-map img status time)]
     (player name)))
 
 (defn all-players []

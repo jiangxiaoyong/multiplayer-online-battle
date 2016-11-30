@@ -59,7 +59,7 @@
 
 (defn check-all-players-ready []
   (if-not (nil? (:all-players @players))
-    (every? #(if (:ready? %) true false) (vals (:all-players @players)))
+    (every? #(if (= (:status %) (:ready utils/player-status)) true false) (vals (:all-players @players)))
     false))
 
 (defn ready-to-gaming? []
@@ -104,7 +104,7 @@
 (defmethod event :game-lobby/player-ready
   [{:as ev-msg :keys [client-id uid ?data]}]
   (log/info "player %s is ready now!" uid)
-  (swap! players update-in [:all-players (num->keyword uid) :ready?] not)
+  (swap! players assoc-in [:all-players (num->keyword uid) :status] (:ready utils/player-status))
   (ready-to-gaming?))
 
 ;; gaming events
