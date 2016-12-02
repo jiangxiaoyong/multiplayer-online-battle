@@ -12,9 +12,11 @@
 (def components-state (r/atom {}))
 (reset! components-state {:game-lobby {:style {:player-come-animated "animated fadeInUp"
                                                :player-ready-span "label label-success"
-                                               :player-ready-label "ready"
+                                               :player-ready-label "Ready"
                                                :player-unready-span "label label-default"
-                                               :player-unready-label "unready"
+                                               :player-unready-label "Idle"
+                                               :player-gaming-span "label label-info"
+                                               :player-gaming-label "Gaming"
                                                :player-ready-animated "animated bounceIn"
                                                :btn-ready "not-active btn btn-lg btn-info btn-block animated flipInX"
                                                :btn-ready-label "Waiting..."
@@ -24,7 +26,7 @@
                                                }
                                        :player-status{:ready 0
                                                       :unready 1
-                                                      :gaming 2}} 
+                                                      :gaming 2}}
                           :landing-pg {:animate "animated fadeInDown"
                                        :allow-in true}})
 

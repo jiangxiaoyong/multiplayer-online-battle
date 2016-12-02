@@ -28,15 +28,13 @@
 (defn handle-ev-msg [ev-msg]
   (let [ev-type (first ev-msg)
         payload (:payload (second ev-msg))
-        val (first (vals payload))
+        payload-val (first (vals payload))
         who (first (keys payload))]
-    (infof "val = %s" val)
-    (infof "who = %s" who)
     (cond
      (= :game-lobby/players-all ev-type) (swap! game-lobby-state assoc :players-all payload)
-     (= :game-lobby/player-come ev-type) (if-not (me? (first (vals payload))) (swap! game-lobby-state update-in [:players-all] conj payload))
-     (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload)
-     (= :game-lobby/player-update ev-type) (swap! game-lobby-state assoc-in [:players-all who :status] (:status val))
+     (= :game-lobby/player-come ev-type) (if-not (me? payload-val) (swap! game-lobby-state update-in [:players-all] conj payload))
+     (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload-val)
+     (= :game-lobby/player-update ev-type) (swap! game-lobby-state assoc-in [:players-all who :status] (:status payload-val))
      (= :game-lobby/all-players-ready ev-type) (swap! game-lobby-state update-in [:all-players-ready] not)
      (= :game-lobby/pre-enter-game-count-down ev-type) (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload))
      (= :game-lobby/pre-enter-game-dest ev-type) (.assign js/window.location (:dest payload)))))
@@ -44,10 +42,12 @@
 (defn player-info []
   (let [style-ready-animated (get-state-value "game-lobby style player-ready-animated")
         style-ready-span (get-state-value "game-lobby style player-ready-span")
+        style-ready-label (get-state-value "game-lobby style player-ready-label")
         style-unready-span (get-state-value "game-lobby style player-unready-span")
+        style-unready-label (get-state-value "game-lobby style player-unready-label")
+        style-gaming-span (get-state-value "game-lobby style player-gaming-span")
+        style-gaming-label (get-state-value "game-lobby style player-gaming-label")
         style-player-come-animated (get-state-value "game-lobby style player-come-animated")
-        style-player-ready-label (get-state-value "game-lobby style player-ready-label")
-        style-player-unready-label (get-state-value "game-lobby style player-unready-label")
         player-status-ready (get-state-value "game-lobby player-status ready")
         player-status-unready (get-state-value "game-lobby player-status unready")
         player-status-gaming (get-state-value "game-lobby player-status gaming")
@@ -60,7 +60,14 @@
         [:div.user-name user-name]]
        [:td.text-center
         [:h4 {:class (if (= status player-status-ready) style-ready-animated)}
-         [:span {:class (if (= status player-status-ready) style-ready-span style-unready-span )} (if (= status player-status-ready) style-player-ready-label style-player-unready-label)]]]])))
+         [:span {:class (cond
+                         (= status player-status-ready) style-ready-span 
+                         (= status player-status-unready) style-unready-span
+                         (= status player-status-gaming) style-gaming-span)} 
+          (cond
+           (= status player-status-ready) style-ready-label
+           (= status player-status-unready) style-unready-label
+           (= status player-status-gaming) style-gaming-label)]]]])))
 
 (defn statusBtn []
   (let []

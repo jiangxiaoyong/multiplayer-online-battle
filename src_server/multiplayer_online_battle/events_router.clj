@@ -98,7 +98,7 @@
   [{:as ev-msg :keys [uid]}]
   (let [ev-player-cur (partial utils/ev-msg :game-lobby/player-current)
         ev-all-players (partial utils/ev-msg :game-lobby/players-all)]
-    (return-info uid (ev-player-cur (utils/select-player uid)))
+    (return-info uid (ev-player-cur (utils/target-player uid)))
     (return-info uid (ev-all-players (utils/all-players)))))
 
 (defmethod event :game-lobby/player-ready

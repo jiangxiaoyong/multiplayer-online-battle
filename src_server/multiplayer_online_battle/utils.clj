@@ -18,11 +18,21 @@
 (defn- wrap-payload [data]
   {:payload data})
 
-(defn select-player [uid]
-  (->  @players
-       (:all-players)
-       ((num->keyword uid))))
+(defn- wrap-player-id [val uid]
+  (fn [map]
+    (assoc map (num->keyword uid) val)))
 
+(defn select-player [players uid]
+  (-> players
+      (:all-players)
+      ((num->keyword uid))))
+
+(defn target-player [uid]
+  (let [player (-> @players
+                   (select-player uid)
+                   (wrap-player-id uid))]
+    (player {})))
+ 
 (defn- avatar [player img]
   (assoc player :avatar-img img))
 
