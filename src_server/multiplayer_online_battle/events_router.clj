@@ -7,7 +7,7 @@
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.game-state :refer [players]]
+            [multiplayer-online-battle.game-state :refer [players players-init-state]]
             [multiplayer-online-battle.synchronization :refer [synchronize-game-lobby]]
             [multiplayer-online-battle.websocket :as ws]
             [multiplayer-online-battle.utils :as utils]))
@@ -24,21 +24,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn reset-game []
-  (reset! players {})
-  (init-game-lobby-state))
+  (reset! players players-init-state))
 
 (defn check-game-lobby-state [old new]
   (let [new-players-count (count (keys (:all-players new)))
         old-players-count (count (keys (:all-players old)))
         changed-map (second (diff old new))
-        changed-entry (first (vals changed-map))]
+        changed-val (first (vals changed-map))]
     (cond
-     (> new-players-count old-players-count) (utils/ev-data-map :game-lobby/player-come changed-entry)
+     (> new-players-count old-players-count) (utils/ev-data-map :game-lobby/player-come changed-val (first (keys changed-map)))
      (< new-players-count old-players-count) (utils/ev-data-map :game-lobby-leave (log/info "player leave"))
      (and (= new-players-count old-players-count)
-          (contains? changed-map :all-players-ready)) (utils/ev-data-map :game-lobby/all-players-ready {:all-players-ready (:abbll-players-ready @players)})
+          (contains? changed-map :all-players-ready)) (utils/ev-data-map :game-lobby/all-players-ready {:all-players-ready (:all-players-ready @players)} 123)
      (and (= new-players-count old-players-count)
-          (contains? changed-map :all-players)) (utils/ev-data-map :game-lobby/player-update changed-entry))))
+          (contains? changed-map :all-players)) (utils/ev-data-map :game-lobby/player-update changed-val (first (keys changed-map))))))
 
 (defn fire-game-lobby-sync 
   [key watched old new]
@@ -47,6 +46,7 @@
     (log/info "old lobby state === " old)
     (log/info "new lobby state === " new)
     (let [{:keys [ev-type data]} (check-game-lobby-state old new)]
+      (log/info "ev-type data" ev-type data)
       (synchronize-game-lobby ev-type data))))
 
 (defn pre-enter-game []
@@ -104,14 +104,13 @@
 (defmethod event :game-lobby/player-ready
   [{:as ev-msg :keys [client-id uid ?data]}]
   (log/info "player %s is ready now!" uid)
-  (swap! players assoc-in [:all-players (num->keyword uid) :status] (:ready utils/player-status))
+  (swap! players assoc-in [:all-players (utils/num->keyword uid) :status] (:ready utils/player-status))
   (ready-to-gaming?))
 
 ;; gaming events
 
 (defmethod event :gaming/get-player-info
-  [{:as ev-msg}]
-  (return-player-info-gaming (:uid ev-msg)))
+  [{:as ev-msg}])
 
 (defmethod event :gaming/cmd
   [{:as ev-msg}]

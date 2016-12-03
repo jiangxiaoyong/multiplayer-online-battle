@@ -15,43 +15,29 @@
 (defn num->keyword [uid]
   (keyword (str uid)))
 
-(defn- wrap-payload [data]
-  {:payload data})
+(defn- wrap-data [key data]
+  (assoc {} key data))
 
-(defn- wrap-player-id [val uid]
-  (fn [map]
-    (assoc map (num->keyword uid) val)))
-
-(defn select-player [players uid]
-  (-> players
-      (:all-players)
-      ((num->keyword uid))))
+(defn select-player [uid players]
+  (->> players
+       (:all-players)
+       ((num->keyword uid))))
 
 (defn target-player [uid]
-  (let [player (-> @players
-                   (select-player uid)
-                   (wrap-player-id uid))]
-    (player {})))
- 
-(defn- avatar [player img]
-  (assoc player :avatar-img img))
+   (->> @players
+        (select-player uid)
+        (wrap-data (num->keyword uid))))
 
-(defn- status? [player status]
-  (assoc player :status status))
-
-(defn- time-stamp [player time]
-  (assoc player :time-stamp time))
-
-(defn- user-name [player name]
-  (assoc player :user-name name))
+(defn- add-key-val [k v m]
+  (assoc m k v))
 
 (defn- player-init-state [player img status time]
   (fn [name]
-    (-> player
-        (avatar img)
-        (status? status)
-        (time-stamp time)
-        (user-name name))))
+    (->> player
+         (add-key-val :avatar-img img)
+         (add-key-val :status status)
+         (add-key-val :time-stamp time)
+         (add-key-val :user-name  name))))
 
 (defn create-player [name]
   (let [img (str (rand-int 8) ".png")
@@ -67,12 +53,14 @@
 
 (defn ev-msg [ev-type data]
   (->> data
-       (wrap-payload)
+       (wrap-data :payload)
        (vector ev-type)))
 
 (defn send-fn [uid ev]
   (ws/send-fn uid ev))
 
-(defn ev-data-map [ev-type data]
-  {:ev-type ev-type
-   :data data})
+(defn ev-data-map [ev-type data id]
+  (->> {}
+       (add-key-val :ev-type ev-type)
+       (add-key-val :data data)
+       (add-key-val :id id)))
