@@ -51,13 +51,17 @@
   (-> @players
       (:all-players)))
 
-(defn ev-msg [ev-type data]
+(defn ev-msg [ev data]
   (->> data
        (wrap-data :payload)
-       (vector ev-type)))
+       (vector ev)))
 
 (defn send-fn [uid ev]
   (ws/send-fn uid ev))
+
+(defn send-ev-msg [uids payload]
+  (doseq [uid uids]
+    (ws/send-fn uid payload)))
 
 (defn ev-data-map [ev-type data id]
   (->> {}
