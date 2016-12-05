@@ -126,7 +126,6 @@
                               (log "game lobby will mount")
                               (reset-game-lobby-state)
                               (go
-                               (>! game-lobby-out [:game-lobby/sub-ev])
                                (>! game-lobby-out [:game-lobby/lobby-state?])))
       :component-did-mount (fn [_]
                              (log "game lobby did mount")

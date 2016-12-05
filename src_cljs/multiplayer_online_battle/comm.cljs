@@ -64,7 +64,7 @@
          (= ch ws->lobby) (do
                             (>! game-lobby-in data))
          (= ch game-lobby-out) (do
-                            (send-fn data))))
+                                 (send-fn data))))
       (recur))
     {:game-lobby-in game-lobby-in
      :game-lobby-out game-lobby-out}))

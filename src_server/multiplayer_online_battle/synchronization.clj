@@ -33,23 +33,24 @@
      (= ev-type :game-lobby/pre-enter-game-dest) (broadcast data)
      (= ev-type :game-lobby/all-players-ready) (broadcast data))))
 
-(defn- uids-no-sender [s-id]
-  (let [ids (:ws @ws/connected-uids)]
-    (remove (fn [id]
-              (= s-id id)) ids)))
+(declare uids-no-sender)
+(declare sync-ch)
 
-(def m-uids-no-sender (memoize uids-no-sender))
+(defn- no-sender [s-id]
+  (memoize (fn [uids]
+             (remove (fn [id]
+                       (= s-id id)) uids))))
 
-(defn broadcast-no-sender [s-id ev data]
-  (let [uids-no-sender (m-uids-no-sender s-id)
+(defn- broadcast-no-sender [ev data]
+  (let [uids (uids-no-sender (:ws @ws/connected-uids))
         ev-msg (utils/ev-msg ev data)
-        ids-data (conj [] (vec uids-no-sender) ev-msg)
+        ids-data (conj [] (vec uids) ev-msg)
         ch-out (chan)]
     (go
       (>! ch-out ids-data))
     ch-out))
 
-(defn broadcast-all [ev data]
+(defn- broadcast-all [ev data]
   (let [uids (:ws @ws/connected-uids)
         ev-msg (utils/ev-msg ev data)
         ids-data (conj [] (vec uids) ev-msg)
@@ -57,6 +58,9 @@
     (go
       (>! ch-out ids-data))
     ch-out))
+
+(defn unknow []
+  (let []))
 
 (defn sync-fn
   ([f & args] 
@@ -79,6 +83,9 @@
       (utils/send-ev-msg uids payload))
     (recur)))
 
-(defn init-sync []
+(defn init-sync [uid]
+  (def uids-no-sender (no-sender uid))
   (def sync-ch (chan))
+  (def broadcast (partial sync-fn broadcast-no-sender))
+  (def emit (partial sync-fn broadcast-all))
   (ev-msg-sink sync-ch))

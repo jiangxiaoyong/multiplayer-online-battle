@@ -62,9 +62,3 @@
 (defn send-ev-msg [uids payload]
   (doseq [uid uids]
     (ws/send-fn uid payload)))
-
-(defn ev-data-map [ev-type data id]
-  (->> {}
-       (add-key-val :ev-type ev-type)
-       (add-key-val :data data)
-       (add-key-val :id id)))

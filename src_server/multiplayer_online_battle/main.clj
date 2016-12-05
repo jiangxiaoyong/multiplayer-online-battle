@@ -4,8 +4,7 @@
             [clojure.pprint :refer [pprint]]
             [multiplayer-online-battle.websocket :refer [start-websocket]]
             [multiplayer-online-battle.events-router :refer [start-events-router]]
-            [multiplayer-online-battle.server :refer [start-web-server stop-web-server]]
-            ))
+            [multiplayer-online-battle.server :refer [start-web-server stop-web-server]]))
 
 (defn start
   []

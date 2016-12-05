@@ -8,7 +8,7 @@
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.game-state :refer [players players-init-state]]
-            [multiplayer-online-battle.synchronization :refer [synchronize-game-lobby]]
+            [multiplayer-online-battle.synchronization :refer [broadcast emit init-sync]]
             [multiplayer-online-battle.websocket :as ws]
             [multiplayer-online-battle.utils :as utils]))
 
@@ -26,36 +26,14 @@
 (defn reset-game []
   (reset! players players-init-state))
 
-(defn check-game-lobby-state [old new]
-  (let [new-players-count (count (keys (:all-players new)))
-        old-players-count (count (keys (:all-players old)))
-        changed-map (second (diff old new))
-        changed-val (first (vals changed-map))]
-    (cond
-     (> new-players-count old-players-count) (utils/ev-data-map :game-lobby/player-come changed-val (first (keys changed-map)))
-     (< new-players-count old-players-count) (utils/ev-data-map :game-lobby-leave (log/info "player leave"))
-     (and (= new-players-count old-players-count)
-          (contains? changed-map :all-players-ready)) (utils/ev-data-map :game-lobby/all-players-ready {:all-players-ready (:all-players-ready @players)} 123)
-     (and (= new-players-count old-players-count)
-          (contains? changed-map :all-players)) (utils/ev-data-map :game-lobby/player-update changed-val (first (keys changed-map))))))
-
-(defn fire-game-lobby-sync 
-  [key watched old new]
-  (when-not (= old new)
-    (newline)
-    (log/info "old lobby state === " old)
-    (log/info "new lobby state === " new)
-    (let [{:keys [ev-type data]} (check-game-lobby-state old new)]
-      (log/info "ev-type data" ev-type data)
-      (synchronize-game-lobby ev-type data))))
-
 (defn pre-enter-game []
   (log/info "notify all players pre-entering game")
   (swap! players update-in [:all-players-ready] not)
   (let [pre-enter-game-count-down "game-lobby/pre-enter-game-count-down"
         pre-enter-game-dest "game-lobby/pre-enter-game-dest"]
-    (<!! (synchronize-game-lobby (keyword pre-enter-game-count-down))) ;; ugly solution, use blocking take that waiting timeout chan close,which returen nil
-    (synchronize-game-lobby (keyword pre-enter-game-dest) {:dest "/gaming"})))
+    ;;(<!! (synchronize-game-lobby (keyword pre-enter-game-count-down))) ;; ugly solution, use blocking take that waiting timeout chan close,which returen nil
+    ;;(synchronize-game-lobby (keyword pre-enter-game-dest) {:dest "/gaming"})
+    ))
 
 (defn check-all-players-ready []
   (if-not (nil? (:all-players @players))
@@ -63,7 +41,7 @@
     false))
 
 (defn ready-to-gaming? []
-  (if (check-all-players-ready) (pre-enter-game)))
+  (when (check-all-players-ready) (pre-enter-game)))
 
 (defn return-info [uid payload]
   (utils/send-fn uid payload))
@@ -90,10 +68,6 @@
 
 ;; game-looby events
 
-(defmethod event :game-lobby/sub-ev
-  [{:as ev-msg}]
-  (add-watch players :lobby-state fire-game-lobby-sync))
-
 (defmethod event :game-lobby/lobby-state?
   [{:as ev-msg :keys [uid]}]
   (let [ev-player-cur (partial utils/ev-msg :game-lobby/player-current)
@@ -105,6 +79,7 @@
   [{:as ev-msg :keys [client-id uid ?data]}]
   (log/info "player %s is ready now!" uid)
   (swap! players assoc-in [:all-players (utils/num->keyword uid) :status] (:ready utils/player-status))
+  (emit :game-lobby/player-update (utils/target-player uid))
   (ready-to-gaming?))
 
 ;; gaming events
