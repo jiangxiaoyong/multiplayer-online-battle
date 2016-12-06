@@ -2,17 +2,15 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! >! chan close!]]
             [clojure.string :as str]
+            [ajax.core :refer [GET POST]]
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.comm :refer [reconnect start-comm game-lobby-ch]]
-            [multiplayer-online-battle.states :refer [components-state]]
+            [multiplayer-online-battle.comm :refer [reconnect start-comm game-lobby-ch chsk-ready?]]
+            [multiplayer-online-battle.states :refer [components-state game-lobby-state game-lobby-init-state]]
             [multiplayer-online-battle.utils :refer [mount-dom]]))
 
 (enable-console-print!)
-
-(def game-lobby-init-state {:all-players-ready false})
-(def game-lobby-state (r/atom game-lobby-init-state))
 
 (defn reset-game-lobby-state []
   (reset! game-lobby-state game-lobby-init-state))
@@ -126,7 +124,9 @@
                               (log "game lobby will mount")
                               (reset-game-lobby-state)
                               (go
-                               (>! game-lobby-out [:game-lobby/lobby-state?])))
+                                (let [ready? (<! chsk-ready?)]
+                                  (when ready?
+                                    (>! game-lobby-out [:game-lobby/lobby-state?])))))
       :component-did-mount (fn [_]
                              (log "game lobby did mount")
                              (go-loop []
@@ -140,5 +140,5 @@
   (mount-dom #'game-lobby))
 
 (defn ^:export run []
-  (mount-dom #'game-lobby)
-  (start-comm))
+  (start-comm)
+  (mount-dom #'game-lobby))

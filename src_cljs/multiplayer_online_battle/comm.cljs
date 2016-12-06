@@ -4,7 +4,8 @@
             [clojure.string :as str]
             [taoensso.sente  :as sente :refer (cb-success?)]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [reagent.debug :refer [dbg log prn]]))
+            [reagent.debug :refer [dbg log prn]]
+            [multiplayer-online-battle.states :refer [game-lobby-state]]))
 
 (enable-console-print!)
 
@@ -21,6 +22,8 @@
 
 (declare ws->lobby)
 (declare ws->gaming)
+
+(def chsk-ready? (chan))
 
 ;;;;;;;;;;;;; Set up Sente event handler
 (defn where-to-route? [ev-type]
@@ -40,7 +43,10 @@
         (cond
          (= id :chsk/state) (let [[old-state-map new-state-map] ?data]
                               (when (:first-open? new-state-map)
-                                (infof "Channel socket succuessfully established! %s" new-state-map)))
+                                (swap! game-lobby-state update-in [:chsk-ready?] not)
+                                (>! chsk-ready? (:chsk-ready? @game-lobby-state))
+                                (infof "Channel socket succuessfully established! %s" new-state-map)
+                                ))
          (= id :chsk/handshake) (let [[?uid ?handshake-data] ?data]
                                   (infof "Handshake: %s" ?data))
          (= id :chsk/recv) (let [ev-type (first ?data)
