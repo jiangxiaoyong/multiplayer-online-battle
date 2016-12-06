@@ -16,4 +16,8 @@
 (defn ajax-call [fn url params] 
   (fn url {:params params}))
 
+(defn num->keyword [uid]
+  (keyword (str uid)))
+
+
 
