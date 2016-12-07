@@ -12,6 +12,18 @@
             [multiplayer-online-battle.websocket :as ws]
             [multiplayer-online-battle.utils :as utils]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Handler common
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn return-players-state [uid where]
+  (let [ev-type-player-cur (keyword (str where "/player-current"))
+        ev-type-player-all (keyword (str where "/players-all"))
+        ev-player-cur (partial utils/ev-msg ev-type-player-cur)
+        ev-player-all (partial utils/ev-msg ev-type-player-all)]
+    (return-info uid (ev-player-cur (utils/target-player uid)))
+    (return-info uid (ev-player-all (utils/all-players)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Gaming events handler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -25,8 +37,6 @@
 
 (defn reset-game []
   (reset! players players-init-state))
-
-(def pre-enter-game-p (promise))
 
 (defn pre-enter-game []
   (log/info "notify all players pre-entering game")
@@ -70,10 +80,7 @@
 
 (defmethod event :game-lobby/lobby-state?
   [{:as ev-msg :keys [uid]}]
-  (let [ev-player-cur (partial utils/ev-msg :game-lobby/player-current)
-        ev-all-players (partial utils/ev-msg :game-lobby/players-all)]
-    (return-info uid (ev-player-cur (utils/target-player uid)))
-    (return-info uid (ev-all-players (utils/all-players)))))
+  (return-players-state uid "game-lobby"))
 
 (defmethod event :game-lobby/player-ready
   [{:as ev-msg :keys [client-id uid ?data]}]
@@ -84,8 +91,9 @@
 
 ;; gaming events
 
-(defmethod event :gaming/get-player-info
-  [{:as ev-msg}])
+(defmethod event :gaming/gaming-state?
+  [{:as ev-msg :keys [uid]}]
+  (return-players-state uid "gaming"))
 
 (defmethod event :gaming/cmd
   [{:as ev-msg}]

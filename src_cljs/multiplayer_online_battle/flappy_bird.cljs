@@ -7,7 +7,7 @@
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.comm :refer [reconnect start-comm gaming-ch]]
+            [multiplayer-online-battle.comm :refer [reconnect start-comm gaming-ch chsk-ready?]]
             [multiplayer-online-battle.states :refer [components-state flap-starting-state flap-state]]
             [multiplayer-online-battle.utils :refer [mount-dom]]))
 
@@ -240,8 +240,9 @@
                               (def gaming-in gaming-in)
                               (def gaming-out gaming-out))
                             (go
-                             (debugf "sending")
-                             (>! gaming-out [:gaming/get-player-info {:playload "info myself"}])))
+                                (let [ready? (<! chsk-ready?)]
+                                  (when ready?
+                                    (>! gaming-out [:gaming/gaming-state?])))))
     :component-did-mount (fn []
                            (log "gaming did mount")
                            (go-loop []
