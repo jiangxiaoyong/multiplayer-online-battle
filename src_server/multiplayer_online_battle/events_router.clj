@@ -8,7 +8,7 @@
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.game-state :refer [players players-init-state]]
-            [multiplayer-online-battle.synchronization :refer [broadcast emit init-sync]]
+            [multiplayer-online-battle.synchronization :refer [broadcast emit init-sync count-down]]
             [multiplayer-online-battle.websocket :as ws]
             [multiplayer-online-battle.utils :as utils]))
 
@@ -26,14 +26,14 @@
 (defn reset-game []
   (reset! players players-init-state))
 
+(def pre-enter-game-p (promise))
+
 (defn pre-enter-game []
   (log/info "notify all players pre-entering game")
   (swap! players update-in [:all-players-ready] not)
-  (let [pre-enter-game-count-down "game-lobby/pre-enter-game-count-down"
-        pre-enter-game-dest "game-lobby/pre-enter-game-dest"]
-    ;;(<!! (synchronize-game-lobby (keyword pre-enter-game-count-down))) ;; ugly solution, use blocking take that waiting timeout chan close,which returen nil
-    ;;(synchronize-game-lobby (keyword pre-enter-game-dest) {:dest "/gaming"})
-    ))
+  (emit :game-lobby/all-players-ready {:all-ready true})
+  (count-down :game-lobby/pre-enter-game-count-down [3 2 1 0])
+  (emit :game-lobby/pre-enter-game-dest {:dest "/gaming"}))
 
 (defn check-all-players-ready []
   (if-not (nil? (:all-players @players))

@@ -10,29 +10,6 @@
 
 ;;;;;;;;;;;; Frame Synchronization for game lobby
 
-(defn synchronize-game-lobby
-  "server->client async pushes, setup a loop to broadcast all players status to all connected players 10 times per second"
-  [ev-type & rest]
-  (let [data (first rest)
-        broadcast (fn [payload]
-                    (let [uids (:ws @ws/connected-uids)]
-                      (doseq [uid uids]
-                        (ws/send-fn uid
-                                    [ev-type
-                                     {:payload payload}]))))
-        count-down (fn []
-                     (go
-                       (doseq [count [3 2 1 0]]
-                         (broadcast {:count count})
-                         (<! (timeout 1000)))))]
-    (cond
-     (= ev-type :game-lobby/player-come) (broadcast data)
-     (= ev-type :game-looby/player-leave) (broadcast data)
-     (= ev-type :game-lobby/player-update) (broadcast data)
-     (= ev-type :game-lobby/pre-enter-game-count-down) (count-down)
-     (= ev-type :game-lobby/pre-enter-game-dest) (broadcast data)
-     (= ev-type :game-lobby/all-players-ready) (broadcast data))))
-
 (declare uids-no-sender)
 (declare sync-ch)
 
@@ -59,10 +36,7 @@
       (>! ch-out ids-data))
     ch-out))
 
-(defn unknow []
-  (let []))
-
-(defn sync-fn
+(defn- sync-fn
   ([f & args] 
    (let [ch (apply f args)]
      (go-loop []
@@ -71,10 +45,9 @@
        (recur)))))
 
 (defn count-down [ev data]
-  (go
-    (doseq [count data]
-      (sync-fn broadcast-all ev {:count count})
-      (<! (timeout 1000)))))
+  (doseq [count data]
+    (Thread/sleep 1000)
+    (sync-fn broadcast-all ev {:count count})))
 
 (defn- ev-msg-sink
   [ch]
