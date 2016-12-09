@@ -27,6 +27,12 @@ body {
   background: transparent url(../images/flappyBird/scrolling-border.png) repeat-x top left;
 }
 
+.flappy-name {
+  position: relative;
+  margin-top: -21px;
+  margin-left: 10px;
+}
+
 .flappy {
     position: absolute;
     background: transparent url(../images/flappyBird/flappy-base.png) no-repeat top left;

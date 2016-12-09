@@ -2,8 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
-            [cljs.core.async :refer [<! >! put! take! chan close! timeout]]
-            [multiplayer-online-battle.utils :refer [mount-dom]]))
+            [cljs.core.async :refer [<! >! put! take! chan close! timeout]]))
 
 (enable-console-print!)
 
@@ -37,16 +36,20 @@
 
 ;; Flappy-bird state
 
-(def flap-starting-state {:timer-running false
+(def flap-starting-state {:timer-running true
                           :flappy-y 300
                           :start-time 0
                           :jump-start-time 0
                           :jump-step 0
-                          :jump-count 0
+                          :jump-count 0})
+
+(def world-staring-state {:all-players {}
                           :pillar-list
                           [{:start-time 0
                             :start-pos-x 1200
                             :cur-x 1200
-                            :gap-top 200 }]})
+                            :gap-top 200}]})
 
-(def flap-state (r/atom flap-starting-state))
+(def world (r/atom world-staring-state))
+
+

@@ -8,7 +8,7 @@
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.comm :refer [reconnect start-comm game-lobby-ch chsk-ready?]]
             [multiplayer-online-battle.states :refer [components-state game-lobby-state game-lobby-init-state]]
-            [multiplayer-online-battle.utils :refer [mount-dom num->keyword]]))
+            [multiplayer-online-battle.utils :refer [mount-dom handle-ev-msg]]))
 
 (enable-console-print!)
 
@@ -17,30 +17,6 @@
 
 (defn get-state-value [k]
   (get-in @components-state (map #(keyword %) (str/split k #" "))))
-
-(defn me? [{:keys [:user-name] :as msg}]
-  (if (= user-name (:user-name (first (vals (:player-current @game-lobby-state)))))
-    true
-    false))
-
-(defn player-exist? [id]
-  (if (contains? (:players-all @game-lobby-state) id)
-    true
-    false))
-
-(defn handle-ev-msg [ev-msg]
-  (let [ev-type (first ev-msg)
-        payload (:payload (second ev-msg))
-        payload-val (first (vals payload))
-        who (first (keys payload))]
-    (cond
-     (= :game-lobby/players-all ev-type) (swap! game-lobby-state assoc :players-all payload)
-     (= :game-lobby/player-come ev-type) (if-not (player-exist? who) (swap! game-lobby-state update-in [:players-all] conj payload))
-     (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current payload-val)
-     (= :game-lobby/player-update ev-type) (swap! game-lobby-state assoc-in [:players-all who :status] (:status payload-val))
-     (= :game-lobby/all-players-ready ev-type) (swap! game-lobby-state update-in [:all-players-ready] not)
-     (= :game-lobby/pre-enter-game-count-down ev-type) (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload))
-     (= :game-lobby/pre-enter-game-dest ev-type) (.assign js/window.location (:dest payload)))))
 
 (defn player-info []
   (let [style-ready-animated (get-state-value "game-lobby style player-ready-animated")

@@ -8,8 +8,8 @@
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.comm :refer [reconnect start-comm gaming-ch chsk-ready?]]
-            [multiplayer-online-battle.states :refer [components-state flap-starting-state flap-state]]
-            [multiplayer-online-battle.utils :refer [mount-dom]]))
+            [multiplayer-online-battle.states :refer [components-state flap-starting-state world]]
+            [multiplayer-online-battle.utils :refer [mount-dom handle-ev-msg]]))
 
 (enable-console-print!)
 
@@ -24,6 +24,10 @@
 (def pillar-spacing 310)
 (def pillar-gap 170)
 (def pillar-width 86)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; common
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn floor [x] (.floor js/Math x))
 
@@ -158,7 +162,7 @@
       score))
 
 (defn animation-loop [time-stamp]
-  (let [new-state (swap! flap-state (partial animation-update time-stamp))]
+  (let [new-state (swap! world (partial animation-update time-stamp))]
     (when (:timer-running new-state)
       ;;(debugf "new flap-state %s" @flap-state)
       (.requestAnimationFrame js/window animation-loop))))
@@ -170,7 +174,7 @@
 (defn keydown [e]
   (condp = (.-keyCode e)
     KeyCodes/UP (do
-                  (swap! flap-state jump)
+                  (swap! world jump)
                   ;;(>! gaming-out [:gaming/cmd {:payload {:uid 123 :cmd (.keyCode e)}}])
                   )
     nil))
@@ -191,19 +195,8 @@
    js/window
    (fn [time-stamp]
      (infof "Start Game" )
-     (reset! flap-state (reset-state time-stamp))
+     (reset! world (reset-state time-stamp))
      (animation-loop time-stamp))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; handle events message
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn handle-ev-msg [ev-msg]
-  (let [ev-type (first ev-msg)
-        payload (:payload (second ev-msg))]
-    (cond
-     (= :gaming/uid ev-type) (infof "gaming/uid"))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; React UI
@@ -217,17 +210,26 @@
    [:div.pillar.pillar-lower {:style {:left (px cur-x)
                                       :height lower-height}}]])
 
+(defn flappy []
+  (fn [{:keys [flappy-y left user-name]}]
+    [:div.flappy {:style {:top (px flappy-y) :left left}}
+     [:div.flappy-name user-name]]))
+
 (defn main []
   (fn []
-    (let [{:keys [flappy-y timer-running ground-pos pillar-list score]} @flap-state]
+    ;;(let [{:keys [flappy-y timer-running score ground-pos pillar-list]} @world])
+    (let [{:keys [all-players ground-pos pillar-list]} @world]
+      (when [])
       [:div#board-area
        [:div.board
-        [:h1.score score]
-        (if-not timer-running
-          [:a.start-button {:on-click #(start-game)} "START"]
-          [:span])
+        ;; [:h1.score score]
+        ;; (if-not timer-running
+        ;;   [:a.start-button {:on-click #(start-game)} "START"]
+        ;;   [:span])
         [:div (map pillar pillar-list)]
-        [:div.flappy {:style {:top (px flappy-y)}}]
+        (print "all" all-players)
+        (for [player (vals all-players)]
+          ^{:key (:time-stamp player)} [flappy player])
         [:div.scrolling-border {:style {:background-position-x (px ground-pos)}}]]])))
 
 (defn flappy-bird []
@@ -236,13 +238,14 @@
                       [main])
     :component-will-mount (fn []
                             (log "gaming will mount")
+                            ;;(start-game)
                             (let [{:keys [gaming-in gaming-out]} (gaming-ch)]
                               (def gaming-in gaming-in)
                               (def gaming-out gaming-out))
                             (go
-                                (let [ready? (<! chsk-ready?)]
-                                  (when ready?
-                                    (>! gaming-out [:gaming/gaming-state?])))))
+                              (let [ready? (<! chsk-ready?)]
+                                (when ready?
+                                  (>! gaming-out [:gaming/gaming-state?])))))
     :component-did-mount (fn []
                            (log "gaming did mount")
                            (go-loop []
