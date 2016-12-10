@@ -8,7 +8,7 @@
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.comm :refer [reconnect start-comm gaming-ch chsk-ready?]]
-            [multiplayer-online-battle.states :refer [components-state flap-starting-state world]]
+            [multiplayer-online-battle.states :refer [components-state flap-starting-state world-staring-state world]]
             [multiplayer-online-battle.utils :refer [mount-dom handle-ev-msg]]))
 
 (enable-console-print!)
@@ -183,12 +183,10 @@
   (events/listen js/document "keydown" keydown))
 
 (defn reset-state [time-stamp]
-  (-> flap-starting-state
+  (-> @world
       (update-in [:pillar-list] (fn [pls] (map #(assoc % :start-time time-stamp) pls)))
-      (assoc
-          :start-time time-stamp
-          :jump-start-time time-stamp
-          :timer-running true)))
+      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :start-time] time-stamp) pls))))
+      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :jump-start-time] time-stamp) pls))))))
 
 (defn start-game []
   (.requestAnimationFrame
@@ -218,19 +216,18 @@
 (defn main []
   (fn []
     ;;(let [{:keys [flappy-y timer-running score ground-pos pillar-list]} @world])
-    (let [{:keys [all-players ground-pos pillar-list]} @world]
-      (when [])
-      [:div#board-area
-       [:div.board
-        ;; [:h1.score score]
-        ;; (if-not timer-running
-        ;;   [:a.start-button {:on-click #(start-game)} "START"]
-        ;;   [:span])
-        [:div (map pillar pillar-list)]
-        (print "all" all-players)
-        (for [player (vals all-players)]
-          ^{:key (:time-stamp player)} [flappy player])
-        [:div.scrolling-border {:style {:background-position-x (px ground-pos)}}]]])))
+    (let [{:keys [all-players ground-pos pillar-list timer-running]} @world]
+      (when timer-running
+        [:div#board-area
+         [:div.board
+          ;; [:h1.score score]
+          ;; (if-not timer-running
+          ;;   [:a.start-button {:on-click #(start-game)} "START"]
+          ;;   [:span])
+          [:div (map pillar pillar-list)]
+          (for [player (vals all-players)]
+            ^{:key (:time-stamp player)} [flappy player])
+          [:div.scrolling-border {:style {:background-position-x (px ground-pos)}}]]]))))
 
 (defn flappy-bird []
   (r/create-class

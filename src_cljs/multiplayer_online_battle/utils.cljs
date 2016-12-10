@@ -44,14 +44,16 @@
      (= :game-lobby/all-players-ready ev-type) (swap! game-lobby-state update-in [:all-players-ready] not)
      (= :game-lobby/pre-enter-game-count-down ev-type) (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload))
      (= :game-lobby/pre-enter-game-dest ev-type) (.assign js/window.location (:dest payload))
-     (= :gaming/player-current ev-type) (swap! world assoc :player-current (first payload-val))
-     (= :gaming/players-all ev-type) (loop [ids payload-keys
-                                            info payload-val
-                                            states (map #(assoc flap-starting-state :left %) (take (count payload-keys) (iterate #(+ 80 %) 212)))]
-                                       (if-not (empty? ids)
-                                         (do
-                                           (swap! world assoc-in [:all-players (first ids)] (merge (first states) (first info)))
-                                           (recur (rest ids) (rest info) (rest states)))))
+     (= :gaming/player-current ev-type) (swap! world assoc :player-current payload)
+     (= :gaming/players-all ev-type) (do
+                                       (loop [ids payload-keys
+                                                info payload-val
+                                                states (map #(assoc flap-starting-state :left %) (take (count payload-keys) (iterate #(+ 80 %) 212)))]
+                                           (if-not (empty? ids)
+                                             (do
+                                               (swap! world assoc-in [:all-players (first ids)] (merge (first states) (first info)))
+                                               (recur (rest ids) (rest info) (rest states)))))
+                                       (swap! world update-in [:timer-running] not))
      )))
 
 

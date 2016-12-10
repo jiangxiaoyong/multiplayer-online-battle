@@ -21,8 +21,8 @@
         ev-type-player-all (keyword (str where "/players-all"))
         ev-player-cur (partial utils/ev-msg ev-type-player-cur)
         ev-player-all (partial utils/ev-msg ev-type-player-all)]
-    (return-info uid (ev-player-cur (utils/target-player uid)))
-    (return-info uid (ev-player-all (utils/all-players)))))
+    (utils/send-fn uid (ev-player-cur (utils/target-player uid)))
+    (utils/send-fn uid (ev-player-all (utils/all-players)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Gaming events handler
@@ -52,9 +52,6 @@
 
 (defn ready-to-gaming? []
   (when (check-all-players-ready) (pre-enter-game)))
-
-(defn return-info [uid payload]
-  (utils/send-fn uid payload))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sente events handler
