@@ -130,20 +130,23 @@
           :jump-start-time cur-time
           :jump-step jump-step)))
 
-(defn sine-wave [state]
-  (assoc state
-    :flappy-y
-    (+ flappy-start-y (* 30 (.sin js/Math (/ (:time-delta state) 300))))))
+(defn sine-wave [player]
+  (assoc-in player
+            [1 :flappy-y]
+            (+ flappy-start-y (* 30 (.sin js/Math (/ (:time-delta (second player)) 300))))))
 
-(defn update-flappy [{:keys [time-delta flappy-y jump-step jump-count] :as state}]
-  (if (pos? jump-count)
-    (let [by-gravity (- jump-step (* time-delta gravity))
-          cur-y (- flappy-y by-gravity)
-          cur-y   (if (> cur-y (- ground-y flappy-height))
-                    (- ground-y flappy-height)
-                    cur-y)]
-      (assoc state :flappy-y cur-y))
-    (sine-wave state)))
+(defn update-flappy [player]
+  (let [state (second player)
+        {:keys [time-delta flappy-y jump-step jump-count]} state]
+    (if (pos? jump-count)
+      (let [by-gravity (- jump-step (* time-delta gravity))
+            cur-y (- flappy-y by-gravity)
+            cur-y   (if (> cur-y (- ground-y flappy-height))
+                      (- ground-y flappy-height)
+                      cur-y)]
+        (assoc-in player [1 :flappy-y] cur-y))
+      (sine-wave player)
+      )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; animation logic per frame
@@ -151,15 +154,15 @@
 
 (defn animation-update [time-stamp state]
   (-> state
-      (assoc
-          :cur-time time-stamp
-          :time-delta (- time-stamp (:jump-start-time state)))
-      update-flappy
-      update-pillars-list
-      update-pillars-pair-height
-      collision?
-      ground
-      score))
+      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :cur-time] time-stamp) pls))))
+      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :time-delta] (- time-stamp (:jump-start-time (second %)))) pls))))
+      (update-in [:all-players] (fn [pls] (into {} (map update-flappy pls))))
+      ;;update-pillars-list
+      ;;update-pillars-pair-height
+      ;;collision?
+      ;;ground
+      ;;score
+      ))
 
 (defn animation-loop [time-stamp]
   (let [new-state (swap! world (partial animation-update time-stamp))]
@@ -218,6 +221,7 @@
     ;;(let [{:keys [flappy-y timer-running score ground-pos pillar-list]} @world])
     (let [{:keys [all-players ground-pos pillar-list timer-running]} @world]
       (when timer-running
+        ;;(start-game)
         [:div#board-area
          [:div.board
           ;; [:h1.score score]
