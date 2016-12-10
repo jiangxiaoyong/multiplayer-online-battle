@@ -38,12 +38,15 @@
 
 (def flap-starting-state {:flappy-y 300
                           :start-time 0
+                          :time-delta 0
                           :jump-start-time 0
                           :jump-step 0
                           :jump-count 0})
 
 (def world-staring-state {:all-players {}
                           :timer-running false
+                          :cur-time 0
+                          :ground-pos 0
                           :pillar-list
                           [{:start-time 0
                             :start-pos-x 1200

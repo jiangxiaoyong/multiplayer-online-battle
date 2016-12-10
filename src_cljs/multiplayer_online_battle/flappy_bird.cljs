@@ -154,13 +154,14 @@
 
 (defn animation-update [time-stamp state]
   (-> state
-      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :cur-time] time-stamp) pls))))
+      (assoc :cur-time time-stamp)
+      ;;(update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :cur-time] time-stamp) pls))))
       (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :time-delta] (- time-stamp (:jump-start-time (second %)))) pls))))
       (update-in [:all-players] (fn [pls] (into {} (map update-flappy pls))))
       ;;update-pillars-list
       ;;update-pillars-pair-height
       ;;collision?
-      ;;ground
+      ground
       ;;score
       ))
 
@@ -219,6 +220,10 @@
 (defn main []
   (fn []
     ;;(let [{:keys [flappy-y timer-running score ground-pos pillar-list]} @world])
+    (let [{:keys [timer-running]} @world]
+      (when timer-running
+        ;;(start-game)
+        ))
     (let [{:keys [all-players ground-pos pillar-list timer-running]} @world]
       (when timer-running
         ;;(start-game)
