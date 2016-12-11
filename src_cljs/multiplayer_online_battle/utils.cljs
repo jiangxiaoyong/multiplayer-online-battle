@@ -48,12 +48,13 @@
      (= :gaming/players-all ev-type) (do
                                        (loop [ids payload-keys
                                                 info payload-val
-                                                states (map #(assoc flap-starting-state :left %) (take (count payload-keys) (iterate #(+ 80 %) 212)))]
+                                                states (map #(assoc flap-starting-state :flappy-x %) (take (count payload-keys) (iterate #(+ 80 %) 212)))]
                                            (if-not (empty? ids)
                                              (do
                                                (swap! world assoc-in [:all-players (first ids)] (merge (first states) (first info)))
                                                (recur (rest ids) (rest info) (rest states)))))
-                                       (swap! world update-in [:timer-running] not))
+                                       (swap! world update-in [:timer-running] not)
+                                       (swap! world update-in [:start?] not))
      )))
 
 

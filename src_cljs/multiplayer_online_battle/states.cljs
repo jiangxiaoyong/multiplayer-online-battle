@@ -37,14 +37,17 @@
 ;; Flappy-bird state
 
 (def flap-starting-state {:flappy-y 300
+                          :flappy-x 0
                           :start-time 0
                           :time-delta 0
                           :jump-start-time 0
                           :jump-step 0
-                          :jump-count 0})
+                          :jump-count 0
+                          :alive true})
 
 (def world-staring-state {:all-players {}
                           :timer-running false
+                          :start? false
                           :cur-time 0
                           :ground-pos 0
                           :pillar-list

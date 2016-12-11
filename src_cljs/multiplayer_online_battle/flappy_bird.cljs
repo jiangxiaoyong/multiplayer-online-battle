@@ -15,7 +15,6 @@
 
 (def flappy-start-y 300)
 (def gravity 0.02)
-(def flappy-x 212)
 (def flappy-width 57)
 (def flappy-height 41)
 (def ground-y 561)
@@ -53,7 +52,7 @@
 
 ;; pillars collision
 
-(defn in-pillar? [{:keys [cur-x]}]
+(defn in-pillar? [{:keys [flappy-x]} {:keys [cur-x]}]
   (and (>= (+ flappy-x flappy-width)
            cur-x)
        (< flappy-x (+ cur-x pillar-width))))
@@ -66,12 +65,14 @@
 (defn bottom-collision? [{:keys [flappy-y]}]
   (>= flappy-y (- ground-y flappy-height)))
 
-(defn collision? [{:keys [pillar-list] :as st}]
-  (if (some #(or (and (in-pillar? %)
-                      (not (in-pillar-gap? st %)))
-                 (bottom-collision? st)) pillar-list)
-    (assoc st :timer-running false)
-    st))
+(defn collision? [cur-id st]
+  (let [{:keys [pillar-list all-players]} st
+        flappy-player (cur-id all-players)]
+    (if (some #(or (and ((partial in-pillar? flappy-player) %)
+                        (not ((partial in-pillar-gap? flappy-player) %)))
+                   (bottom-collision? flappy-player)) pillar-list)
+      (assoc st :timer-running false)
+      st)))
 
 ;; animation
 
@@ -153,22 +154,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn animation-update [time-stamp state]
-  (-> state
-      (assoc :cur-time time-stamp)
-      ;;(update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :cur-time] time-stamp) pls))))
-      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :time-delta] (- time-stamp (:jump-start-time (second %)))) pls))))
-      (update-in [:all-players] (fn [pls] (into {} (map update-flappy pls))))
-      ;;update-pillars-list
-      ;;update-pillars-pair-height
-      ;;collision?
-      ground
-      ;;score
-      ))
+  (let [cur-id (first (keys (:player-current @world)))
+        collision-flappy-cur? (partial collision? cur-id)]
+    (-> state
+        (assoc :cur-time time-stamp)
+        (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :time-delta] (- time-stamp (:jump-start-time (second %)))) pls))))
+        (update-in [:all-players] (fn [pls] (into {} (map update-flappy pls))))
+        update-pillars-list
+        update-pillars-pair-height
+        collision-flappy-cur?
+        ground
+        ;;score
+        )))
 
 (defn animation-loop [time-stamp]
   (let [new-state (swap! world (partial animation-update time-stamp))]
     (when (:timer-running new-state)
-      ;;(debugf "new flap-state %s" @flap-state)
       (.requestAnimationFrame js/window animation-loop))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -185,6 +186,9 @@
 
 (defonce listener
   (events/listen js/document "keydown" keydown))
+
+(defn return-to-lobby []
+  (.assign js/window.location "/gamelobby"))
 
 (defn reset-state [time-stamp]
   (-> @world
@@ -213,26 +217,21 @@
                                       :height lower-height}}]])
 
 (defn flappy []
-  (fn [{:keys [flappy-y left user-name]}]
-    [:div.flappy {:style {:top (px flappy-y) :left left}}
+  (fn [{:keys [flappy-y flappy-x user-name]}]
+    [:div.flappy {:style {:top (px flappy-y) :left flappy-x}}
      [:div.flappy-name user-name]]))
 
 (defn main []
   (fn []
     ;;(let [{:keys [flappy-y timer-running score ground-pos pillar-list]} @world])
-    (let [{:keys [timer-running]} @world]
-      (when timer-running
-        ;;(start-game)
-        ))
-    (let [{:keys [all-players ground-pos pillar-list timer-running]} @world]
-      (when timer-running
-        ;;(start-game)
+    (let [{:keys [all-players ground-pos pillar-list timer-running start?]} @world]
+      (when start?
         [:div#board-area
          [:div.board
           ;; [:h1.score score]
-          ;; (if-not timer-running
-          ;;   [:a.start-button {:on-click #(start-game)} "START"]
-          ;;   [:span])
+          (if-not timer-running
+            [:a.start-button {:on-click #(return-to-lobby)} "RETURN"]
+            [:span])
           [:div (map pillar pillar-list)]
           (for [player (vals all-players)]
             ^{:key (:time-stamp player)} [flappy player])
