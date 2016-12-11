@@ -24,6 +24,9 @@
 (def pillar-gap 170)
 (def pillar-width 86)
 
+(declare gaming-in)
+(declare gaming-out)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; common
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -188,7 +191,9 @@
   (events/listen js/document "keydown" keydown))
 
 (defn return-to-lobby []
-  (.assign js/window.location "/gamelobby"))
+  (.assign js/window.location "/gamelobby")
+  (go
+    (>! gaming-out [:gaming/return-to-lobby])))
 
 (defn reset-state [time-stamp]
   (-> @world
@@ -224,6 +229,8 @@
 (defn main []
   (fn []
     ;;(let [{:keys [flappy-y timer-running score ground-pos pillar-list]} @world])
+    ;; (let [{:keys [start?]} @world]
+    ;;   (start-game))
     (let [{:keys [all-players ground-pos pillar-list timer-running start?]} @world]
       (when start?
         [:div#board-area

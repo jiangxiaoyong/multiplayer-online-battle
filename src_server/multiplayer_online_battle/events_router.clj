@@ -10,7 +10,7 @@
             [multiplayer-online-battle.game-state :refer [players players-init-state]]
             [multiplayer-online-battle.synchronization :refer [broadcast emit init-sync count-down]]
             [multiplayer-online-battle.websocket :as ws]
-            [multiplayer-online-battle.utils :as utils]))
+            [multiplayer-online-battle.utils :as utils :refer [num->keyword]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handler common
@@ -43,7 +43,8 @@
   (swap! players update-in [:all-players-ready] not)
   (emit :game-lobby/all-players-ready {:all-ready true})
   (count-down :game-lobby/pre-enter-game-count-down [3 2 1 0])
-  (emit :game-lobby/pre-enter-game-dest {:dest "/gaming"}))
+  (emit :game-lobby/pre-enter-game-dest {:dest "/gaming"})
+  (swap! players update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :status] (:gaming utils/player-status))) pls))))
 
 (defn check-all-players-ready []
   (if-not (nil? (:all-players @players))
@@ -95,6 +96,11 @@
 (defmethod event :gaming/cmd
   [{:as ev-msg}]
   (process-cmd-msg ev-msg))
+
+(defmethod event :gaming/return-to-lobby
+  [{:as ev-msg :keys [uid]}]
+  (log/info "return-to-lobby" uid)
+  (swap! players assoc-in [:all-players (num->keyword uid) :status] (:unready utils/player-status)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set up Sente events router
