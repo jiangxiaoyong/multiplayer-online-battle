@@ -36,6 +36,15 @@
       (>! ch-out ids-data))
     ch-out))
 
+(defn- send-to-id [id ev data]
+  (let [uids (conj #{} id)
+        ev-msg (utils/ev-msg ev data)
+        ids-data (conj [] (vec uids) ev-msg)
+        ch-out (chan)]
+    (go
+      (>! ch-out ids-data))
+    ch-out))
+
 (defn- sync-fn
   ([f & args] 
    (let [ch (apply f args)]
@@ -61,4 +70,5 @@
   (def sync-ch (chan))
   (def broadcast (partial sync-fn broadcast-no-sender))
   (def emit (partial sync-fn broadcast-all))
+  (def send-only (partial sync-fn send-to-id))
   (ev-msg-sink sync-ch))

@@ -191,7 +191,6 @@
   (events/listen js/document "keydown" keydown))
 
 (defn return-to-lobby []
-  (.assign js/window.location "/gamelobby")
   (go
     (>! gaming-out [:gaming/return-to-lobby])))
 

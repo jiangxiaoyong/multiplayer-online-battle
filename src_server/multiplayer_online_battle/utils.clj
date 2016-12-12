@@ -5,7 +5,8 @@
    [clojure.pprint :refer [pprint]]
    [clojure.data :refer [diff]]
    [multiplayer-online-battle.game-state :refer [players]]
-   [multiplayer-online-battle.websocket :as ws]))
+   [multiplayer-online-battle.websocket :as ws]
+   [multiplayer-online-battle.game-state :refer [players]]))
 
 (def player-status
   {:ready 0
@@ -62,3 +63,6 @@
 (defn send-ev-msg [uids payload]
   (doseq [uid uids]
     (ws/send-fn uid payload)))
+
+(defn player-exist? [id]
+  (contains? (:all-players @players) id))

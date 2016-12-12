@@ -86,7 +86,8 @@
          (= ch ws->gaming) (do
                             (>! gaming-in data))
          (= ch gaming-out) (do
-                            (send-fn data))))
+                             (debugf "gaming channele sending %s" data)
+                             (send-fn data))))
       (recur))
     {:gaming-in gaming-in
      :gaming-out gaming-out}))

@@ -13,7 +13,7 @@
             [multiplayer-online-battle.websocket :as ws]
             [multiplayer-online-battle.synchronization :refer [broadcast emit init-sync]]
             [multiplayer-online-battle.game-state :refer [players]]
-            [multiplayer-online-battle.events-router :refer [check-all-players-ready]]
+            [multiplayer-online-battle.events-router :refer [check-all-players-status]]
             [multiplayer-online-battle.utils :as utils]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -36,7 +36,8 @@
 
 (defn login-handler [req]
   (log/info "check-all-status" (check-all-players-ready))
-  (if-not (check-all-players-ready)
+  (if-not (or (check-all-players-status :ready)
+              (check-all-players-status :gaming))
     (let [{:keys [session params]} req
           {:keys [user-name]} params
           uid (System/currentTimeMillis)]

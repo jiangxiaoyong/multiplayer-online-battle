@@ -8,7 +8,7 @@
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.game-state :refer [players players-init-state]]
-            [multiplayer-online-battle.synchronization :refer [broadcast emit init-sync count-down]]
+            [multiplayer-online-battle.synchronization :refer [broadcast emit send-only init-sync count-down] :as sync]
             [multiplayer-online-battle.websocket :as ws]
             [multiplayer-online-battle.utils :as utils :refer [num->keyword]]))
 
@@ -24,12 +24,16 @@
     (utils/send-fn uid (ev-player-cur (utils/target-player uid)))
     (utils/send-fn uid (ev-player-all (utils/all-players)))))
 
+(defn handle-player-leave [id]
+  (when (utils/player-exist? (num->keyword id))
+    (swap! players update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (num->keyword id)) pls))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Gaming events handler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn process-cmd-msg [{:as ev-msg :keys [?data uid]}]
-  (log/info "Receiving msg" ))
+  (log/info "Receiving msg"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Game Lobby events handler
@@ -46,13 +50,13 @@
   (emit :game-lobby/pre-enter-game-dest {:dest "/gaming"})
   (swap! players update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :status] (:gaming utils/player-status))) pls))))
 
-(defn check-all-players-ready []
-  (if-not (nil? (:all-players @players))
-    (every? #(if (= (:status %) (:ready utils/player-status)) true false) (vals (:all-players @players)))
+(defn check-all-players-status [status]
+  (if-not (empty? (:all-players @players))
+    (every? #(if (= (:status %) (status utils/player-status)) true false) (vals (:all-players @players)))
     false))
 
 (defn ready-to-gaming? []
-  (when (check-all-players-ready) (pre-enter-game)))
+  (when (check-all-players-status :ready) (pre-enter-game)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sente events handler
@@ -65,6 +69,11 @@
   (log/info "Unhandeled event: " event)
   (when ?reply-fn
     (?reply-fn {:umatched-event-as-echoed-from-from-server event})))
+
+(defmethod event :chsk/uidport-close
+  [{:as ev-msg :keys [uid]}]
+  (log/info "Players leave!!!" uid)
+  (handle-player-leave uid))
 
 (defmethod event :test/game
   [{:as ev-msg :keys [id ?data event]}]
@@ -99,8 +108,11 @@
 
 (defmethod event :gaming/return-to-lobby
   [{:as ev-msg :keys [uid]}]
-  (log/info "return-to-lobby" uid)
-  (swap! players assoc-in [:all-players (num->keyword uid) :status] (:unready utils/player-status)))
+  (swap! players assoc-in [:all-players (num->keyword uid) :status] (:unready utils/player-status)) ;;change cur-player status to unready on server
+  (swap! players assoc-in [:all-players-ready] false)
+  (broadcast :game-lobby/player-update (utils/target-player uid))
+  (send-only uid :gaming/redirect {:dest "/gamelobby"})
+  ) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set up Sente events router
