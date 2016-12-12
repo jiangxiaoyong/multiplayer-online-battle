@@ -24,9 +24,12 @@
     (utils/send-fn uid (ev-player-cur (utils/target-player uid)))
     (utils/send-fn uid (ev-player-all (utils/all-players)))))
 
-(defn handle-player-leave [id]
-  (when (utils/player-exist? (num->keyword id))
-    (swap! players update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (num->keyword id)) pls))))))
+(defn handle-player-leave [uid]
+  (when (utils/player-exist? (num->keyword uid))
+    (swap! players update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (num->keyword uid)) pls))))
+    (emit :game-lobby/player-leave (utils/target-player uid))
+    ;;(emit :gaming/player-leave (utils/target-player uid))
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Gaming events handler

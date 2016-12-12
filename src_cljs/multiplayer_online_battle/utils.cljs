@@ -50,6 +50,7 @@
      (= :game-lobby/player-come ev-type) (if-not (player-exist? who) (swap! game-lobby-state update-in [:players-all] conj payload))
      (= :game-lobby/player-current ev-type) (swap! game-lobby-state assoc :player-current (first payload-val))
      (= :game-lobby/player-update ev-type) (swap! game-lobby-state assoc-in [:players-all who :status] (:status (first payload-val)))
+     (= :game-lobby/player-leave ev-type) (swap! game-lobby-state update-in [:players-all] (fn [pls] (into {} (remove #(= (first %) (first payload-keys)) pls))))
      (= :game-lobby/all-players-ready ev-type) (swap! game-lobby-state update-in [:all-players-ready] not)
      (= :game-lobby/pre-enter-game-count-down ev-type) (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload))
      (= :game-lobby/pre-enter-game-dest ev-type) (.assign js/window.location (:dest payload))
