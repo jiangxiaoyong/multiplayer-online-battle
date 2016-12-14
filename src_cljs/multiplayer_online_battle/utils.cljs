@@ -5,7 +5,7 @@
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.states :refer [components-state game-lobby-state world flap-starting-state]]))
+            [multiplayer-online-battle.states :refer [components-state game-lobby-state world flap-starting-state start-game?]]))
 
 (enable-console-print!)
 
@@ -59,7 +59,9 @@
      (= :gaming/players-all ev-type) (do
                                        (construct-all-flappy-state payload-keys payload-val)
                                        (swap! world update-in [:timer-running] not)
-                                       (swap! world update-in [:start?] not))
+                                       (swap! world update-in [:players-loaded?] not)
+                                       (go
+                                         (>! start-game? true)))
      )))
 
 

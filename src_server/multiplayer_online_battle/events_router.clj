@@ -113,8 +113,8 @@
   [{:as ev-msg :keys [uid]}]
   (swap! players assoc-in [:all-players (num->keyword uid) :status] (:unready utils/player-status)) ;;change cur-player status to unready on server
   (swap! players assoc-in [:all-players-ready] false)
-  (broadcast :game-lobby/player-update (utils/target-player uid))
   (send-only uid :gaming/redirect {:dest "/gamelobby"})
+  (broadcast :game-lobby/player-update (utils/target-player uid))
   ) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -8,7 +8,7 @@
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.comm :refer [reconnect start-comm gaming-ch chsk-ready?]]
-            [multiplayer-online-battle.states :refer [components-state flap-starting-state world-staring-state world]]
+            [multiplayer-online-battle.states :refer [components-state flap-starting-state world-staring-state world start-game?]]
             [multiplayer-online-battle.utils :refer [mount-dom handle-ev-msg]]))
 
 (enable-console-print!)
@@ -26,6 +26,7 @@
 
 (declare gaming-in)
 (declare gaming-out)
+(declare start)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; common
@@ -228,20 +229,18 @@
 (defn main []
   (fn []
     ;;(let [{:keys [flappy-y timer-running score ground-pos pillar-list]} @world])
-    ;; (let [{:keys [start?]} @world]
-    ;;   (start-game))
-    (let [{:keys [all-players ground-pos pillar-list timer-running start?]} @world]
-      (when start?
-        [:div#board-area
-         [:div.board
-          ;; [:h1.score score]
-          (if-not timer-running
-            [:a.start-button {:on-click #(return-to-lobby)} "RETURN"]
-            [:span])
-          [:div (map pillar pillar-list)]
+    (let [{:keys [all-players ground-pos pillar-list timer-running players-loaded?]} @world]
+      [:div#board-area
+       [:div.board
+        ;; [:h1.score score]
+        (if-not timer-running
+          [:a.start-button {:on-click #(return-to-lobby)} "RETURN"]
+          [:span])
+        [:div (map pillar pillar-list)]
+        (when players-loaded?
           (for [player (vals all-players)]
-            ^{:key (:time-stamp player)} [flappy player])
-          [:div.scrolling-border {:style {:background-position-x (px ground-pos)}}]]]))))
+            ^{:key (:time-stamp player)} [flappy player]))
+        [:div.scrolling-border {:style {:background-position-x (px ground-pos)}}]]])))
 
 (defn flappy-bird []
   (r/create-class
@@ -249,14 +248,17 @@
                       [main])
     :component-will-mount (fn []
                             (log "gaming will mount")
-                            ;;(start-game)
                             (let [{:keys [gaming-in gaming-out]} (gaming-ch)]
                               (def gaming-in gaming-in)
                               (def gaming-out gaming-out))
-                            (go
-                              (let [ready? (<! chsk-ready?)]
-                                (when ready?
-                                  (>! gaming-out [:gaming/gaming-state?])))))
+                            (go-loop []
+                              (let [[data ch] (alts! [chsk-ready? start-game?])]
+                                (cond
+                                 (= ch chsk-ready?) (when data
+                                                      (>! gaming-out [:gaming/gaming-state?]))
+                                 (= ch start-game?) (when data
+                                                      (start-game))))
+                              (recur)))
     :component-did-mount (fn []
                            (log "gaming did mount")
                            (go-loop []
