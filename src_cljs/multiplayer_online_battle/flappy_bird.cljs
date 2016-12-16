@@ -9,7 +9,8 @@
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.comm :refer [reconnect start-comm gaming-ch chsk-ready?]]
             [multiplayer-online-battle.states :refer [components-state flap-starting-state world-staring-state world start-game?]]
-            [multiplayer-online-battle.utils :refer [mount-dom handle-ev-msg]]))
+            [multiplayer-online-battle.utils :refer [mount-dom handle-ev-msg]]
+            [multiplayer-online-battle.reactive :as rt]))
 
 (enable-console-print!)
 
@@ -180,16 +181,16 @@
 ;; Gaming control
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn keydown [e]
-  (condp = (.-keyCode e)
-    KeyCodes/UP (do
-                  (swap! world jump)
-                  ;;(>! gaming-out [:gaming/cmd {:payload {:uid 123 :cmd (.keyCode e)}}])
-                  )
-    nil))
+;; (defn keydown [e]
+;;   (condp = (.-keyCode e)
+;;     KeyCodes/UP (do
+;;                   (swap! world jump)
+;;                   ;;(>! gaming-out [:gaming/cmd {:payload {:uid 123 :cmd (.keyCode e)}}])
+;;                   )
+;;     nil))
 
-(defonce listener
-  (events/listen js/document "keydown" keydown))
+;; (defonce listener
+;;   (events/listen js/document "keydown" keydown))
 
 (defn return-to-lobby []
   (go

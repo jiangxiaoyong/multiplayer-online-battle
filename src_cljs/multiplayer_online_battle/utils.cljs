@@ -26,6 +26,14 @@
     true
     false))
 
+(defn- wrap-data [key data]
+  (assoc {} key data))
+
+(defn ev-msg [ev data]
+  (->> data
+       (wrap-data :payload)
+       (vector ev)))
+
 (defn set-flappys-position [flappys]
   (let [count (count flappys)
         positions (take count (iterate #(+ 80 %) 212))]))
