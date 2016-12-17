@@ -35,7 +35,6 @@
 
 
 (defn login-handler [req]
-  (log/info "check-all-status" (check-all-players-ready))
   (if-not (or (check-all-players-status :ready)
               (check-all-players-status :gaming))
     (let [{:keys [session params]} req

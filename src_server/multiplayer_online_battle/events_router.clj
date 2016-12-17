@@ -35,7 +35,7 @@
 ;; Gaming events handler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn process-cmd-msg [{:as ev-msg :keys [?data uid]}]
+(defn process-action-msg [{:as ev-msg :keys [?data uid]}]
   (log/info "Receiving msg"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -105,9 +105,9 @@
   [{:as ev-msg :keys [uid]}]
   (return-players-state uid "gaming"))
 
-(defmethod event :gaming/cmd
+(defmethod event :gaming/action
   [{:as ev-msg}]
-  (process-cmd-msg ev-msg))
+  (process-action-msg ev-msg))
 
 (defmethod event :gaming/return-to-lobby
   [{:as ev-msg :keys [uid]}]

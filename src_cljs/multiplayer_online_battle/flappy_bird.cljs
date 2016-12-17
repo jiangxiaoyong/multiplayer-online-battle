@@ -7,9 +7,9 @@
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.comm :refer [reconnect start-comm gaming-ch chsk-ready?]]
+            [multiplayer-online-battle.comm :refer [reconnect start-comm gaming-in gaming-out chsk-ready?]]
             [multiplayer-online-battle.states :refer [components-state flap-starting-state world-staring-state world start-game?]]
-            [multiplayer-online-battle.utils :refer [mount-dom handle-ev-msg]]
+            [multiplayer-online-battle.utils :refer [mount-dom handle-ev-msg ev-msg]]
             [multiplayer-online-battle.reactive :as rt]))
 
 (enable-console-print!)
@@ -25,8 +25,6 @@
 (def pillar-gap 170)
 (def pillar-width 86)
 
-(declare gaming-in)
-(declare gaming-out)
 (declare start)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -249,14 +247,11 @@
                       [main])
     :component-will-mount (fn []
                             (log "gaming will mount")
-                            (let [{:keys [gaming-in gaming-out]} (gaming-ch)]
-                              (def gaming-in gaming-in)
-                              (def gaming-out gaming-out))
                             (go-loop []
                               (let [[data ch] (alts! [chsk-ready? start-game?])]
                                 (cond
                                  (= ch chsk-ready?) (when data
-                                                      (>! gaming-out [:gaming/gaming-state?]))
+                                                      (>! gaming-out (ev-msg :gaming/gaming-state? {})))
                                  (= ch start-game?) (when data
                                                       (start-game))))
                               (recur)))

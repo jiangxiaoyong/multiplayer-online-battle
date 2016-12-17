@@ -2,15 +2,15 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! >! chan close!]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.states :refer [world]]
-            [multiplayer-online-battle.control :as ctrl]))
+            [multiplayer-online-battle.states :refer [world start-game?]]
+            [multiplayer-online-battle.control :as ctrl]
+            [multiplayer-online-battle.comm :refer [gaming-in gaming-out]]
+            [multiplayer-online-battle.utils :refer [ev-msg]]))
 
 (enable-console-print!)
 
 (def arrow-keys #{37 38 39 40})
 (def space-key #{32})
-
-(def cur-id (first (keys (:player-current @world))))
 
 (defn key-ev [type]
   (fn [element]
@@ -34,7 +34,16 @@
   (-> (keys-only space-key)
       (.filter (fn [key] (if (= (.-type key) "keydown") true false)))))
 
+(defn upload-action [action]
+  (let [cur-id (first (keys (:player-current @world)))
+        data {:player-id cur-id
+              :key-type (.-type action)
+              :key-code (.-keyCode action)}]
+    (go
+      (>! gaming-out (ev-msg :gaming/action data)))))
+
 (.subscribe (key-space-up-only) 
-            (fn [v] (print "keycode" (.-keyCode v) "keytype" (.-type v)))
+            (fn [a] (upload-action a))
             (fn [e] (print "error" e))
             (fn [c] (print "complete" c)))
+

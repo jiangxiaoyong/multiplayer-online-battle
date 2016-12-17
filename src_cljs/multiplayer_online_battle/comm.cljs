@@ -92,6 +92,10 @@
     {:gaming-in gaming-in
      :gaming-out gaming-out}))
 
+(let [{:keys [gaming-in gaming-out]} (gaming-ch)]
+  (def gaming-in gaming-in)
+  (def gaming-out gaming-out))
+
 ;;;;;;;;;;;;;;; Define Sente event handlers
 
 ;; (defmulti event-msg-handler :id)
