@@ -40,7 +40,7 @@
               :key-type (.-type action)
               :key-code (.-keyCode action)}]
     (go
-      (>! gaming-out (ev-msg :gaming/action data)))))
+      (>! gaming-out (ev-msg :gaming/command data)))))
 
 (.subscribe (key-space-up-only) 
             (fn [a] (upload-action a))

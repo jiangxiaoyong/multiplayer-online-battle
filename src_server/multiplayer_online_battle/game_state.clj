@@ -4,5 +4,6 @@
             [clojure.pprint :refer [pprint]]
             ))
 
-(def players-init-state {:all-players-ready false :all-players {}})
+(def players-init-state {:all-players-ready false
+                         :all-players {}})
 (def players (atom players-init-state))

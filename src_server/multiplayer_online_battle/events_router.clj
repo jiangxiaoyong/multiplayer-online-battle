@@ -8,7 +8,7 @@
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.game-state :refer [players players-init-state]]
-            [multiplayer-online-battle.synchronization :refer [broadcast emit send-only init-sync count-down] :as sync]
+            [multiplayer-online-battle.synchronization :refer [broadcast emit send-only init-sync count-down cmd-msg-buffer] :as sync]
             [multiplayer-online-battle.websocket :as ws]
             [multiplayer-online-battle.utils :as utils :refer [num->keyword]]))
 
@@ -29,14 +29,18 @@
     (swap! players update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (num->keyword uid)) pls))))
     (emit :game-lobby/player-leave (utils/target-player uid))
     ;;(emit :gaming/player-leave (utils/target-player uid))
+    ;; TODO handle case of none players, need to reset gaming state
     ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Gaming events handler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn process-action-msg [{:as ev-msg :keys [?data uid]}]
-  (log/info "Receiving msg"))
+(defn process-command [{:as ev-msg :keys [?data uid]}]
+  (let [payload (:payload ?data)]
+    (log/info "upload cmd-msg")
+    (>!! cmd-msg-buffer payload)
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Game Lobby events handler
@@ -105,12 +109,13 @@
   [{:as ev-msg :keys [uid]}]
   (return-players-state uid "gaming"))
 
-(defmethod event :gaming/action
+(defmethod event :gaming/command
   [{:as ev-msg}]
-  (process-action-msg ev-msg))
+  (process-command ev-msg))
 
 (defmethod event :gaming/return-to-lobby
   [{:as ev-msg :keys [uid]}]
+  (log/info "returne to lobby ")
   (swap! players assoc-in [:all-players (num->keyword uid) :status] (:unready utils/player-status)) ;;change cur-player status to unready on server
   (swap! players assoc-in [:all-players-ready] false)
   (send-only uid :gaming/redirect {:dest "/gamelobby"})

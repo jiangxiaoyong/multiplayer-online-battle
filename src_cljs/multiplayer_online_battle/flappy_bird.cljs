@@ -251,9 +251,11 @@
                               (let [[data ch] (alts! [chsk-ready? start-game?])]
                                 (cond
                                  (= ch chsk-ready?) (when data
-                                                      (>! gaming-out (ev-msg :gaming/gaming-state? {})))
+                                                      (>! gaming-out (ev-msg :gaming/gaming-state? {}))
+                                                      )
                                  (= ch start-game?) (when data
-                                                      (start-game))))
+                                                      (start-game)
+                                                      )))
                               (recur)))
     :component-did-mount (fn []
                            (log "gaming did mount")

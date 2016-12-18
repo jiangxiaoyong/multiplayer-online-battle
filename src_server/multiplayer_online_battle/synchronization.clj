@@ -2,7 +2,7 @@
   (:gen-class)
   (:require [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]]
-            [clojure.core.async :as async  :refer (<! <!! >! >!! put! take! chan go go-loop timeout)]
+            [clojure.core.async :as async  :refer (<! <!! >! >!! put! take! poll! pipe chan go go-loop timeout close!)]
             [multiplayer-online-battle.websocket :as ws]
             [taoensso.timbre    :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.game-state :refer [players]]
@@ -72,3 +72,37 @@
   (def emit (partial sync-fn broadcast-all))
   (def send-only (partial sync-fn send-to-id))
   (ev-msg-sink sync-ch))
+
+(def cmd-msg-buffer (chan 100))
+
+(defn pack-cmd-msgs []
+  (loop [accu []]
+    (let [cmd (poll! cmd-msg-buffer)]
+      (if cmd
+        (recur (conj accu cmd))
+        accu))))
+
+;; (defn cmd-msg-sink [ev]
+;;   (go-loop []
+;;     (let [cmd-msgs (pack-cmd-msgs)
+;;           wrap-cmd-msgs (assoc {} :cmd-msg cmd-msgs)]
+;;       (log/info "cmd-msgs" cmd-msgs)
+;;       (emit ev wrap-cmd-msgs)
+;;       (<! (timeout 3000))
+;;       )
+;;     (recur)))
+
+(defn cmd-msg-sink [ev]
+  (future
+    (loop [cmd-msgs (pack-cmd-msgs)
+           wrap-cmd-msgs (assoc {} :cmd-msg cmd-msgs)]
+      (log/info "cmd-msgs" cmd-msgs)
+      (emit ev wrap-cmd-msgs)
+      (Thread/sleep 3000)
+      (recur (pack-cmd-msgs) (assoc {} :cmd-msg cmd-msgs))
+      )))
+
+;;(def cmd-sink (cmd-msg-sink :gaming/cmd-msg))
+
+
+
