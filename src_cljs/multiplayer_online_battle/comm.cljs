@@ -51,6 +51,7 @@
                                   (infof "Handshake: %s" ?data))
          (= id :chsk/recv) (let [ev-type (first ?data)
                                  route-to (where-to-route? ev-type)]
+                             (infof "comm receiving %s" ?data)
                              (cond
                               (= route-to :game-lobby) (>! ws->lobby ?data)
                               (= route-to :gaming) (>! ws->gaming ?data)

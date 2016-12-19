@@ -11,7 +11,7 @@
             [clojure.pprint :refer [pprint]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.websocket :as ws]
-            [multiplayer-online-battle.synchronization :refer [broadcast emit init-sync]]
+            [multiplayer-online-battle.synchronization :refer [broadcast no-sender]]
             [multiplayer-online-battle.game-state :refer [players]]
             [multiplayer-online-battle.events-router :refer [check-all-players-status]]
             [multiplayer-online-battle.utils :as utils]))
@@ -29,9 +29,10 @@
   (log/info "login-player uid = " uid "user-name" user-name)
   (if (contains? (:all-players @players) (utils/num->keyword uid))
     (log/info "player %s already exist!" uid)
-    (let [new-player {(utils/num->keyword uid) (utils/create-player user-name)}]
+    (let [new-player {(utils/num->keyword uid) (utils/create-player user-name)}
+          ids-no-sender (no-sender uid)]
       (swap! players update-in [:all-players] (fn [existing new] (into {} (conj existing new))) new-player)
-      (broadcast :game-lobby/player-come new-player))))
+      (broadcast ids-no-sender :game-lobby/player-come new-player))))
 
 
 (defn login-handler [req]
@@ -41,7 +42,6 @@
           {:keys [user-name]} params
           uid (System/currentTimeMillis)]
       (log/info "login user = " user-name)
-      (init-sync uid)
       (login-player uid user-name)
       {:status 200 :session (assoc session :uid uid)})
     {:status 409 :body {:msg "battle in progress"}}))

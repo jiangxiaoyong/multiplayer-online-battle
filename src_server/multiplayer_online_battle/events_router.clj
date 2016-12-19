@@ -7,8 +7,8 @@
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.game-state :refer [players players-init-state]]
-            [multiplayer-online-battle.synchronization :refer [broadcast emit send-only init-sync count-down cmd-msg-buffer] :as sync]
+            [multiplayer-online-battle.game-state :refer [players reset-game]]
+            [multiplayer-online-battle.synchronization :refer [broadcast no-sender count-down cmd-msg-buffer] :as sync]
             [multiplayer-online-battle.websocket :as ws]
             [multiplayer-online-battle.utils :as utils :refer [num->keyword]]))
 
@@ -26,11 +26,12 @@
 
 (defn handle-player-leave [uid]
   (when (utils/player-exist? (num->keyword uid))
-    (swap! players update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (num->keyword uid)) pls))))
-    (emit :game-lobby/player-leave (utils/target-player uid))
-    ;;(emit :gaming/player-leave (utils/target-player uid))
+    (let [ids-no-sender (no-sender uid)]
+      (swap! players update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (num->keyword uid)) pls))))
+      (broadcast ids-no-sender :game-lobby/player-leave (utils/target-player uid)))))
+
+;;(emit :gaming/player-leave (utils/target-player uid))
     ;; TODO handle case of none players, need to reset gaming state
-    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Gaming events handler
@@ -46,15 +47,12 @@
 ;; Game Lobby events handler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn reset-game []
-  (reset! players players-init-state))
-
 (defn pre-enter-game []
   (log/info "notify all players pre-entering game")
   (swap! players update-in [:all-players-ready] not)
-  (emit :game-lobby/all-players-ready {:all-ready true})
+  (broadcast :game-lobby/all-players-ready {:all-ready true})
   (count-down :game-lobby/pre-enter-game-count-down [3 2 1 0])
-  (emit :game-lobby/pre-enter-game-dest {:dest "/gaming"})
+  (broadcast :game-lobby/pre-enter-game-dest {:dest "/gaming"})
   (swap! players update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :status] (:gaming utils/player-status))) pls))))
 
 (defn check-all-players-status [status]
@@ -100,7 +98,7 @@
   [{:as ev-msg :keys [client-id uid ?data]}]
   (log/info "player %s is ready now!" uid)
   (swap! players assoc-in [:all-players (utils/num->keyword uid) :status] (:ready utils/player-status))
-  (emit :game-lobby/player-update (utils/target-player uid))
+  (broadcast :game-lobby/player-update (utils/target-player uid))
   (ready-to-gaming?))
 
 ;; gaming events
@@ -118,7 +116,7 @@
   (log/info "returne to lobby ")
   (swap! players assoc-in [:all-players (num->keyword uid) :status] (:unready utils/player-status)) ;;change cur-player status to unready on server
   (swap! players assoc-in [:all-players-ready] false)
-  (send-only uid :gaming/redirect {:dest "/gamelobby"})
+  (broadcast [uid] :gaming/redirect {:dest "/gamelobby"})
   (broadcast :game-lobby/player-update (utils/target-player uid))
   ) 
 
