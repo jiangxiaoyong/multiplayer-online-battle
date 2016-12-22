@@ -4,7 +4,7 @@
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.states :refer [world start-game?]]
             [multiplayer-online-battle.control :as ctrl]
-            [multiplayer-online-battle.comm :refer [gaming-in gaming-out]]
+            [multiplayer-online-battle.comm :refer [gaming-in gaming-out cmd-msg-ch]]
             [multiplayer-online-battle.utils :refer [ev-msg]]))
 
 (enable-console-print!)
@@ -42,8 +42,21 @@
     (go
       (>! gaming-out (ev-msg :gaming/command data)))))
 
-(.subscribe (key-space-up-only) 
+(defn create-cmd-msg-stream []
+  (-> js/Rx.Observable
+      (.create (fn [observer]
+                 (go-loop []
+                   (let [cmd-msg (<! cmd-msg-ch)]
+                     (.onNext observer (into [] cmd-msg)))
+                   (recur))))))
+
+(.subscribe (key-space-up-only)
             (fn [a] (upload-action a))
-            (fn [e] (print "error" e))
-            (fn [c] (print "complete" c)))
+            (fn [e] (print "key pressing up event error" e))
+            (fn [c] (print "key pressing up event complete" c)))
+
+(.subscribe (create-cmd-msg-stream)
+            (fn [a] (print "stream" a))
+            (fn [e] (print "cmd-msg error" e))
+            (fn [c] (print "cms-msg complete" c)))
 

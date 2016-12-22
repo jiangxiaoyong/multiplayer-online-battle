@@ -57,16 +57,14 @@
     (let [cmd-msgs (pack-cmd-msg)]
       (when-not (empty? cmd-msgs)
         (>! cmd-msg-ch cmd-msgs))
-      (<! (timeout 3000)))
+      (<! (timeout 2000)))
     (recur)))
 
 (defn cmd-msg-sink [ev]
   (go-loop []
     (let [cmd-msgs (<! cmd-msg-ch)
           wrap-cmd-msgs (assoc {} :cmd-msg cmd-msgs)]
-      (log/info "cmd-msgs" cmd-msgs)
-      (broadcast ev wrap-cmd-msgs)
-      )
+      (broadcast ev wrap-cmd-msgs))
     (recur)))
 
 (defn init-sync []

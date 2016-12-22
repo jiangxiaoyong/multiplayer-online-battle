@@ -24,6 +24,7 @@
 (declare ws->gaming)
 
 (def chsk-ready? (chan))
+(def cmd-msg-ch (chan))
 
 ;;;;;;;;;;;;; Set up Sente event handler
 (defn where-to-route? [ev-type]
