@@ -3,12 +3,13 @@
   (:require [cljs.core.async :refer [<! >! chan close!]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.states :refer [world start-game?]]
-            [multiplayer-online-battle.control :as ctrl]
-            [multiplayer-online-battle.comm :refer [gaming-in gaming-out cmd-msg-ch]]
-            [multiplayer-online-battle.utils :refer [ev-msg]]))
+            [multiplayer-online-battle.comm :refer [cmd-msg-ch]]
+            [multiplayer-online-battle.utils :refer [ev-msg]]
+            [multiplayer-online-battle.network :refer [network-ch]]))
 
 (enable-console-print!)
 
+(def reactive-ch (chan))
 (def arrow-keys #{37 38 39 40})
 (def space-key #{32})
 
@@ -40,15 +41,39 @@
               :key-type (.-type action)
               :key-code (.-keyCode action)}]
     (go
-      (>! gaming-out (ev-msg :gaming/command data)))))
+      (>! network-ch (ev-msg :gaming/command data)))))
 
 (defn create-cmd-msg-stream []
   (-> js/Rx.Observable
       (.create (fn [observer]
                  (go-loop []
                    (let [cmd-msg (<! cmd-msg-ch)]
-                     (.onNext observer (into [] cmd-msg)))
+                     (.onNext observer cmd-msg))
                    (recur))))))
+
+(defn create-game-ev-stream []
+  (-> js/Rx.Observable
+      (.create (fn [observer]
+                 (go-loop []
+                   (let [cmd-msg (<! reactive-ch)]
+                     (.onNext observer cmd-msg))
+                   (recur))))))
+
+(defn load-game-state-ev []
+  (-> (create-game-ev-stream)
+      (.filter (fn [ev]
+                 (if (= ev :gaming/gaming-state?) true false)))))
+
+(defn return-to-lobby-ev []
+  (-> (create-game-ev-stream)
+      (.filter (fn [ev]
+                 (if (= ev :gaming/return-to-lobby) true false)))))
+
+(defn init-reactive [])
+
+(defn push-ev-msg->network [ev data]
+  (go
+    (>! network-ch (ev-msg ev data))))
 
 (.subscribe (key-space-up-only)
             (fn [a] (upload-action a))
@@ -56,7 +81,17 @@
             (fn [c] (print "key pressing up event complete" c)))
 
 (.subscribe (create-cmd-msg-stream)
-            (fn [a] (print "stream" a))
+            (fn [a] (print "cms-msg stream" a))
             (fn [e] (print "cmd-msg error" e))
             (fn [c] (print "cms-msg complete" c)))
+
+(.subscribe (load-game-state-ev)
+            (fn [ev] (push-ev-msg->network ev {}))
+            (fn [e] (print "load game state error" e))
+            (fn [c] (print "load game state complete" c)))
+
+(.subscribe (return-to-lobby-ev)
+            (fn [ev] (push-ev-msg->network ev {}))
+            (fn [e] (print "ctrl error" e))
+            (fn [c] (print "ctrl complete" c)))
 

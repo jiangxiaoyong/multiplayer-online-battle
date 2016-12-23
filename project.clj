@@ -93,17 +93,17 @@
                 ;; the presence of a :figwheel configuration here
                 ;; will cause figwheel to inject the figwheel client
                 ;; into your build
-                :figwheel {:on-jsload "multiplayer-online-battle.flappy-bird/fig-reload"
+                :figwheel {:on-jsload "multiplayer-online-battle.game-control/fig-reload"
                            ;; :open-urls will pop open your application
                            ;; in the default browser once Figwheel has
                            ;; started and complied your application.
                            ;; Comment this out once it no longer serves you.
                            :open-urls ["http://localhost:8080/gaming.html"]}
 
-                :compiler {:main multiplayer-online-battle.flappy-bird
-                           :asset-path "js/compiled/out_flappy_bird"
-                           :output-to "resources/public/js/compiled/multiplayer_online_battle_flappy_bird.js"
-                           :output-dir "resources/public/js/compiled/out_flappy_bird"
+                :compiler {:main multiplayer-online-battle.game-control
+                           :asset-path "js/compiled/out_game_control"
+                           :output-to "resources/public/js/compiled/multiplayer_online_battle_game_control.js"
+                           :output-dir "resources/public/js/compiled/out_game_control"
                            :source-map-timestamp true
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
                            ;; https://github.com/binaryage/cljs-devtools

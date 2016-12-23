@@ -7,10 +7,10 @@
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.comm :refer [reconnect start-comm gaming-in gaming-out chsk-ready?]]
             [multiplayer-online-battle.states :refer [components-state flap-starting-state world-staring-state world start-game?]]
-            [multiplayer-online-battle.utils :refer [mount-dom handle-ev-msg ev-msg]]
-            [multiplayer-online-battle.reactive :as rt]))
+            [multiplayer-online-battle.reactive :refer [reactive-ch]]
+            [multiplayer-online-battle.utils :refer [ev-msg]]
+            ))
 
 (enable-console-print!)
 
@@ -24,8 +24,6 @@
 (def pillar-spacing 310)
 (def pillar-gap 170)
 (def pillar-width 86)
-
-(declare start)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; common
@@ -126,14 +124,6 @@
 ;; flappy bird animation
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn jump [{:keys [cur-time jump-count] :as state}]
-  (infof "jump!")
-  (-> state
-      (assoc
-          :jump-count (inc jump-count)
-          :jump-start-time cur-time
-          :jump-step jump-step)))
-
 (defn sine-wave [player]
   (assoc-in player
             [1 :flappy-y]
@@ -190,24 +180,6 @@
 ;; (defonce listener
 ;;   (events/listen js/document "keydown" keydown))
 
-(defn return-to-lobby []
-  (go
-    (>! gaming-out [:gaming/return-to-lobby])))
-
-(defn reset-state [time-stamp]
-  (-> @world
-      (update-in [:pillar-list] (fn [pls] (map #(assoc % :start-time time-stamp) pls)))
-      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :start-time] time-stamp) pls))))
-      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :jump-start-time] time-stamp) pls))))))
-
-(defn start-game []
-  (.requestAnimationFrame
-   js/window
-   (fn [time-stamp]
-     (infof "Start Game" )
-     (reset! world (reset-state time-stamp))
-     (animation-loop time-stamp))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; React UI
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -233,7 +205,8 @@
        [:div.board
         ;; [:h1.score score]
         (if-not timer-running
-          [:a.start-button {:on-click #(return-to-lobby)} "RETURN"]
+          [:a.start-button {:on-click #(go
+                                         (>! reactive-ch :gaming/return-to-lobby))} "RETURN"]
           [:span])
         [:div (map pillar pillar-list)]
         (when players-loaded?
@@ -241,34 +214,11 @@
             ^{:key (:time-stamp player)} [flappy player]))
         [:div.scrolling-border {:style {:background-position-x (px ground-pos)}}]]])))
 
-(defn flappy-bird []
+(defn flappy-bird-ui []
   (r/create-class
    {:reagent-render (fn []
                       [main])
     :component-will-mount (fn []
-                            (log "gaming will mount")
-                            (go-loop []
-                              (let [[data ch] (alts! [chsk-ready? start-game?])]
-                                (cond
-                                 (= ch chsk-ready?) (when data
-                                                      (>! gaming-out (ev-msg :gaming/gaming-state? {}))
-                                                      )
-                                 (= ch start-game?) (when data
-                                                      (start-game)
-                                                      )))
-                              (recur)))
+                            (log "gaming will mount"))
     :component-did-mount (fn []
-                           (log "gaming did mount")
-                           (go-loop []
-                             (let [ev-msg (<! gaming-in)]
-                               (debugf "gaming receiving %s" ev-msg)
-                               (handle-ev-msg ev-msg))
-                             (recur)))}))
-
-(defn fig-reload []
-  (.log js/console "figwheel reloaded! ")
-  (mount-dom #'flappy-bird))
-
-(defn ^:export run []
-  (mount-dom #'flappy-bird)
-  (start-comm))
+                           (log "gaming did mount"))}))
