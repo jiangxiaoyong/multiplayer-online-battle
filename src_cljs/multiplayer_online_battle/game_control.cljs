@@ -1,28 +1,41 @@
 (ns multiplayer-online-battle.game-control
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [cljs.core.async :refer [<! >! chan sliding-buffer put! close! timeout]]
+  (:require [cljs.core.async :refer [<! >! chan sliding-buffer put! close! timeout pub sub]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.states :refer [world start-game?]]
             [multiplayer-online-battle.flappy-bird :refer [animation-loop flappy-bird-ui]]
             [multiplayer-online-battle.utils :refer [mount-dom ev-msg]]
-            [multiplayer-online-battle.network :refer [init-network]]
-            [multiplayer-online-battle.reactive :refer [init-reactive reactive-ch]]
-            [multiplayer-online-battle.comm :refer [chsk-ready?]]))
+            [multiplayer-online-battle.network :refer [init-network network-ch-in]]
+            [multiplayer-online-battle.comm :refer [chsk-ready?]]
+            [multiplayer-online-battle.reactive :refer [reactive-publication]]))
 
-(def ctrl-ch (chan))
 
-(defn init-game-ctrl-ch []
+(def subscribe->reactive (chan))
+
+(defn sub-reactive []
+  (sub reactive-publication :push->game-ctrl subscribe->reactive))
+
+(defn handle-cmd-msg-stream [])
+
+(defn init-subscribe->reactive []
+  (sub-reactive)
   (go-loop []
-    (let [cmd-msgs (<! ctrl-ch)]
-      (doseq [msg cmd-msgs]
-        (print "msg" msg)))
+    (let [content (:content (<! subscribe->reactive))
+          ev (:ev content)
+          data (:data content)]
+      (cond
+       (= ev :return-to-lobby) (go
+                                 (>! network-ch-in data))
+       (= ev :upload-cmd-msg) (go
+                                (>! network-ch-in data))
+       (= ev :cmd-msg-stream) (handle-cmd-msg-stream)))
     (recur)))
 
 (defn load-game-state []
   (go
     (let [ready (<! chsk-ready?)]
       (when ready
-        (>! reactive-ch :gaming/gaming-state?)))))
+        (>! network-ch-in (ev-msg :gaming/gaming-state? {}))))))
 
 (defn reset-state [time-stamp]
   (-> @world
@@ -54,8 +67,7 @@
 
 (defn init-game []
   (init-network)
-  (init-reactive)
-  (init-game-ctrl-ch)
+  (init-subscribe->reactive)
   (load-game-state)
   (fire-game))
 

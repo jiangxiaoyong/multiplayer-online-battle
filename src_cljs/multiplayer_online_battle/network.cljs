@@ -4,9 +4,10 @@
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.states :refer [world]]
             [multiplayer-online-battle.comm :refer [start-comm gaming-ch]]
-            [multiplayer-online-battle.utils :refer [handle-ev-msg]]))
+            [multiplayer-online-battle.utils :refer [handle-ev-msg]]
+            [multiplayer-online-battle.reactive :refer [reactive-ch-in]]))
 
-(def network-ch (chan))
+(def network-ch-in (chan))
 
 (defn load-gaming-ch []
   (let [{:keys [gaming-in gaming-out]} (gaming-ch)]
@@ -15,9 +16,9 @@
 
 (defn init-network-ch []
   (go-loop []
-    (let [[ev-msg ch] (alts! [network-ch gaming-in])]
+    (let [[ev-msg ch] (alts! [network-ch-in gaming-in])]
       (cond
-       (= ch network-ch) (>! gaming-out ev-msg)
+       (= ch network-ch-in) (>! gaming-out ev-msg)
        (= ch gaming-in) (do
                            (debugf "gaming receiving %s" ev-msg)
                            (handle-ev-msg ev-msg)))) ;;TODO, refactor handle incoming msg

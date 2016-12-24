@@ -8,7 +8,7 @@
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.states :refer [components-state flap-starting-state world-staring-state world start-game?]]
-            [multiplayer-online-battle.reactive :refer [reactive-ch]]
+            [multiplayer-online-battle.reactive :refer [reactive-ch-in]]
             [multiplayer-online-battle.utils :refer [ev-msg]]
             ))
 
@@ -177,9 +177,6 @@
 ;;                   )
 ;;     nil))
 
-;; (defonce listener
-;;   (events/listen js/document "keydown" keydown))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; React UI
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -206,7 +203,7 @@
         ;; [:h1.score score]
         (if-not timer-running
           [:a.start-button {:on-click #(go
-                                         (>! reactive-ch :gaming/return-to-lobby))} "RETURN"]
+                                         (>! reactive-ch-in :gaming/return-to-lobby))} "RETURN"]
           [:span])
         [:div (map pillar pillar-list)]
         (when players-loaded?
