@@ -9,13 +9,30 @@
             [multiplayer-online-battle.comm :refer [chsk-ready?]]
             [multiplayer-online-battle.reactive :refer [reactive-publication]]))
 
-
+(def jump-step 7)
 (def subscribe->reactive (chan))
 
 (defn sub-reactive []
   (sub reactive-publication :push->game-ctrl subscribe->reactive))
 
-(defn handle-cmd-msg-stream [])
+(defn jump [{:keys [jump-count] :as state} cur-time]
+  (infof "jump!")
+  (debugf "cur-time %s jump-count %s" cur-time jump-count)
+  (debugf "state %s" state)
+  (-> state
+      (assoc
+          :jump-count (inc jump-count)
+          :jump-start-time cur-time
+          :jump-step jump-step)))
+
+(defn handle-cmd-msg-stream [cmd-msg-stream]
+  (doseq [msg cmd-msg-stream]
+    (let [key-type (:key-type msg)
+          key-code (:key-code msg)
+          player-id (:player-id msg)
+          cur-time (:cur-time @world)]
+      (swap! world update-in [:all-players player-id] jump cur-time)
+      )))
 
 (defn init-subscribe->reactive []
   (sub-reactive)
@@ -28,7 +45,7 @@
                                  (>! network-ch-in data))
        (= ev :upload-cmd-msg) (go
                                 (>! network-ch-in data))
-       (= ev :cmd-msg-stream) (handle-cmd-msg-stream)))
+       (= ev :cmd-msg-stream) (handle-cmd-msg-stream data)))
     (recur)))
 
 (defn load-game-state []
@@ -56,14 +73,6 @@
     (let [fire (<! start-game?)]
       (when fire
         (start-game)))))
-
-;; (defn jump [{:keys [cur-time jump-count] :as state}]
-;;   (infof "jump!")
-;;   (-> state
-;;       (assoc
-;;           :jump-count (inc jump-count)
-;;           :jump-start-time cur-time
-;;           :jump-step jump-step)))
 
 (defn init-game []
   (init-network)

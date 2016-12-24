@@ -57,7 +57,7 @@
     (let [cmd-msgs (pack-cmd-msg)]
       (when-not (empty? cmd-msgs)
         (>! cmd-msg-ch cmd-msgs))
-      (<! (timeout 2000)))
+      (<! (timeout 50)))
     (recur)))
 
 (defn cmd-msg-sink [ev]

@@ -19,7 +19,7 @@
 (def flappy-width 57)
 (def flappy-height 41)
 (def ground-y 561)
-(def jump-step 7)
+
 (def ground-move-speed -0.20)
 (def pillar-spacing 310)
 (def pillar-gap 170)
