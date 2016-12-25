@@ -31,8 +31,7 @@
           key-code (:key-code msg)
           player-id (:player-id msg)
           cur-time (:cur-time @world)]
-      (swap! world update-in [:all-players player-id] jump cur-time)
-      )))
+      (swap! world update-in [:all-players player-id] jump cur-time))))
 
 (defn init-subscribe->reactive []
   (sub-reactive)
@@ -45,7 +44,9 @@
                                  (>! network-ch-in data))
        (= ev :upload-cmd-msg) (go
                                 (>! network-ch-in data))
-       (= ev :cmd-msg-stream) (handle-cmd-msg-stream data)))
+       (= ev :cmd-msg-stream) (handle-cmd-msg-stream data)
+       (= ev :upload-player-state) (go
+                                     (>! network-ch-in data))))
     (recur)))
 
 (defn load-game-state []

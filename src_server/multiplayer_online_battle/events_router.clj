@@ -111,6 +111,12 @@
   [{:as ev-msg}]
   (process-command ev-msg))
 
+(defmethod event :gaming/player-die
+  [{:as ev-msg :keys [uid ?data]}]
+  (log/info "player-die id" ?data "uid" uid)
+  (let [ids-no-sender (no-sender uid)]
+    (broadcast ids-no-sender :gaming/player-die {:player-id (num->keyword uid)})))
+
 (defmethod event :gaming/return-to-lobby
   [{:as ev-msg :keys [uid]}]
   (log/info "returne to lobby ")

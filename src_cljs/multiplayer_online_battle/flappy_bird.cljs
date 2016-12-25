@@ -72,7 +72,10 @@
     (if (some #(or (and ((partial in-pillar? flappy-player) %)
                         (not ((partial in-pillar-gap? flappy-player) %)))
                    (bottom-collision? flappy-player)) pillar-list)
-      (assoc st :timer-running false)
+      (do 
+        (go
+          (>! reactive-ch-in :gaming/player-die))
+        (assoc st :timer-running false))
       st)))
 
 ;; animation
@@ -164,18 +167,6 @@
   (let [new-state (swap! world (partial animation-update time-stamp))]
     (when (:timer-running new-state)
       (.requestAnimationFrame js/window animation-loop))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Gaming control
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; (defn keydown [e]
-;;   (condp = (.-keyCode e)
-;;     KeyCodes/UP (do
-;;                   (swap! world jump)
-;;                   ;;(>! gaming-out [:gaming/cmd {:payload {:uid 123 :cmd (.keyCode e)}}])
-;;                   )
-;;     nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; React UI

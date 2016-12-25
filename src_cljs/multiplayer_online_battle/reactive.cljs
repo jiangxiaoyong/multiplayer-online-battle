@@ -53,10 +53,19 @@
                      (.onNext observer cmd-msg))
                    (recur))))))
 
+(def game-ev-stream (-> (create-game-ev-stream)
+                        (.publish)
+                        (.refCount)))
+
 (defn return-to-lobby-ev []
-  (-> (create-game-ev-stream)
+  (-> game-ev-stream
       (.filter (fn [ev]
                  (if (= ev :gaming/return-to-lobby) true false)))))
+
+(defn player-die-ev []
+  (-> game-ev-stream
+      (.filter (fn [ev]
+                 (if (= ev :gaming/player-die) true false)))))
 
 (defn publish [topic content]
   (go
@@ -68,6 +77,11 @@
               :key-type (.-type action)
               :key-code (.-keyCode action)}]
     (publish :push->game-ctrl {:ev :upload-cmd-msg :data (ev-msg :gaming/command data)})))
+
+(defn upload-player-state [state]
+  (let [cur-id (first (keys (:player-current @world)))
+        data {:player-id cur-id}]
+    (publish :push->game-ctrl {:ev :upload-player-state :data (ev-msg :gaming/player-die data)})))
 
 (defn init-reactive [])
 
@@ -85,6 +99,11 @@
 
 (.subscribe (return-to-lobby-ev)
             (fn [ev] (publish :push->game-ctrl {:ev :return-to-lobby :data (ev-msg ev {})}))
+            (fn [e] (print "ctrl error" e))
+            (fn [c] (print "ctrl complete" c)))
+
+(.subscribe (player-die-ev)
+            (fn [ev] (upload-player-state ev))
             (fn [e] (print "ctrl error" e))
             (fn [c] (print "ctrl complete" c)))
 
