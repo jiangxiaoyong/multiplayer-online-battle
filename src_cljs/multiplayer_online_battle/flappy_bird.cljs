@@ -200,7 +200,7 @@
 (defn main []
   (fn []
     ;;(let [{:keys [flappy-y timer-running score ground-pos pillar-list]} @world])
-    (let [{:keys [all-players ground-pos pillar-list timer-running players-loaded? winner]} @world]
+    (let [{:keys [all-players ground-pos pillar-list timer-running game-loaded? winner]} @world]
       [:div#board-area
        [:div.board
         ;; [:h1.score score]
@@ -209,7 +209,7 @@
                                          (>! reactive-ch-in :gaming/return-to-lobby))} (if-not (nil? winner) "WINNER!" "RETURN")]
           [:span])
         [:div (map pillar pillar-list)]
-        (when players-loaded?
+        (when game-loaded?
           (for [player (vals all-players)]
             ^{:key (:time-stamp player)} [flappy player]))
         [:div.scrolling-border {:style {:background-position-x (px ground-pos)}}]]])))

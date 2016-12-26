@@ -2,7 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! >! chan sliding-buffer put! close! timeout pub sub]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.states :refer [world start-game?]]
+            [multiplayer-online-battle.states :refer [world start-game? game-loaded?]]
             [multiplayer-online-battle.flappy-bird :refer [animation-loop flappy-bird-ui]]
             [multiplayer-online-battle.utils :refer [mount-dom ev-msg]]
             [multiplayer-online-battle.network :refer [init-network network-ch-in]]
@@ -53,6 +53,12 @@
       (when ready
         (>! network-ch-in (ev-msg :gaming/gaming-state? {}))))))
 
+(defn game-loaded-notice []
+  (go
+    (let [loaded (<! game-loaded?)]
+      (when loaded
+        (>! network-ch-in (ev-msg :gaming/game-loaded {}))))))
+
 (defn reset-state [time-stamp]
   (-> @world
       (update-in [:pillar-list] (fn [pls] (map #(assoc % :start-time time-stamp) pls)))
@@ -78,6 +84,7 @@
   (init-network)
   (init-subscribe->reactive)
   (load-game-state)
+  (game-loaded-notice)
   (fire-game))
 
 (defn fig-reload []

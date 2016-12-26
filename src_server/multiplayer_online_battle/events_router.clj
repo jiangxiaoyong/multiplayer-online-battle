@@ -66,6 +66,16 @@
     (when-let [id (find-winner @players)]
       (broadcast [id] :gaming/you-are-winner {:player-id (num->keyword id)}))))
 
+(defn check-all-game-loaded [players]
+  (if-not (empty? (:all-players players))
+    (every? #(if (= (:game-loaded? %) true) true false) (vals (:all-players players))) ;;TODO need to conbimed with check-all-players-status
+    false))
+
+(defn handle-game-loaded [{:as ev-msg :keys [?data uid]}]
+  (swap! players assoc-in [:all-players (num->keyword uid) :game-loaded?] true)
+  (when (check-all-game-loaded @players)
+    (broadcast :gaming/game-loaded {:all-game-loaded true})))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Game Lobby events handler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -138,12 +148,17 @@
   [{:as ev-msg}]
   (handle-player-die ev-msg))
 
+(defmethod event :gaming/game-loaded
+  [{:as ev-msg}]
+  (handle-game-loaded ev-msg))
+
 (defmethod event :gaming/return-to-lobby
   [{:as ev-msg :keys [uid]}]
   (log/info "returne to lobby ")
   (swap! players assoc-in [:all-players (num->keyword uid) :status] (:unready utils/player-status)) ;;change cur-player status to unready on server
   (swap! players assoc-in [:all-players-ready] false)
   (swap! players assoc-in [:all-players (num->keyword uid) :alive?] true)
+  (swap! players assoc-in [:all-players (num->keyword uid) :game-loaded?] false)
   (broadcast [uid] :gaming/redirect {:dest "/gamelobby"})
   (broadcast :game-lobby/player-update (utils/target-player uid))
   ) 

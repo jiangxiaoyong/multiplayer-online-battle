@@ -35,22 +35,24 @@
 (defn- add-key-val [k v m]
   (assoc m k v))
 
-(defn- player-init-state [player img status time alive]
+(defn- player-init-state [player img status time alive game-loaded?]
   (fn [name]
     (->> player
          (add-key-val :avatar-img img)
          (add-key-val :status status)
          (add-key-val :time-stamp time)
          (add-key-val :user-name  name)
-         (add-key-val :alive? alive))))
+         (add-key-val :alive? alive)
+         (add-key-val :game-loaded? game-loaded?))))
 
 (defn create-player [name]
   (let [img (str (rand-int 8) ".png")
         status (:unready player-status)
         time (System/currentTimeMillis)
         alive true
+        game-loaded? false
         player-map {}
-        player (player-init-state player-map img status time alive)]
+        player (player-init-state player-map img status time alive game-loaded?)]
     (player name)))
 
 (defn all-players []

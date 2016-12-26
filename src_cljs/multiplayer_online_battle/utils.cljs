@@ -5,7 +5,7 @@
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.states :refer [components-state game-lobby-state world flap-starting-state start-game?]]
+            [multiplayer-online-battle.states :refer [components-state game-lobby-state world flap-starting-state start-game? game-loaded?]]
             [multiplayer-online-battle.comm :refer [cmd-msg-ch]]))
 
 (enable-console-print!)
@@ -67,14 +67,17 @@
      (= :gaming/player-current ev-type) (swap! world assoc :player-current payload)
      (= :gaming/players-all ev-type) (do
                                        (construct-all-flappy-state payload-keys payload-val)
-                                       (swap! world update-in [:timer-running] not)
-                                       (swap! world update-in [:players-loaded?] not)
+                                       (swap! world assoc-in [:game-loaded?] true)
                                        (go
-                                         (>! start-game? true)))
+                                         (>! game-loaded? true))) ;;TODO, refactor in reactive
      (= :gaming/cmd-msg ev-type) (go
                                    (>! cmd-msg-ch (first payload-val)))
      (= :gaming/player-die ev-type) (swap! world update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (:player-id payload)) pls))))
      (= :gaming/you-are-winner ev-type) (swap! world assoc-in [:winner] (:player-id payload))
+     (= :gaming/game-loaded ev-type) (when (:all-game-loaded payload)
+                                       (swap! world assoc-in [:timer-running] true)
+                                       (go
+                                         (>! start-game? true)))
      )))
 
 
