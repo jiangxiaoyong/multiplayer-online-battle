@@ -52,6 +52,7 @@
                           :players-loaded? false
                           :cur-time 0
                           :ground-pos 0
+                          :winner nil
                           :pillar-list
                           [{:start-time 0
                             :start-pos-x 1200

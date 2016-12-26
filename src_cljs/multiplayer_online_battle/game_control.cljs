@@ -17,8 +17,6 @@
 
 (defn jump [{:keys [jump-count] :as state} cur-time]
   (infof "jump!")
-  (debugf "cur-time %s jump-count %s" cur-time jump-count)
-  (debugf "state %s" state)
   (-> state
       (assoc
           :jump-count (inc jump-count)
@@ -59,7 +57,8 @@
   (-> @world
       (update-in [:pillar-list] (fn [pls] (map #(assoc % :start-time time-stamp) pls)))
       (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :start-time] time-stamp) pls))))
-      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :jump-start-time] time-stamp) pls))))))
+      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :jump-start-time] time-stamp) pls))))
+      (assoc-in [:winner] nil)))
 
 (defn start-game []
   (.requestAnimationFrame

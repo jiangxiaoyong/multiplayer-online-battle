@@ -10,7 +10,7 @@
             [multiplayer-online-battle.game-state :refer [players reset-game]]
             [multiplayer-online-battle.synchronization :refer [broadcast no-sender count-down cmd-msg-buffer] :as sync]
             [multiplayer-online-battle.websocket :as ws]
-            [multiplayer-online-battle.utils :as utils :refer [num->keyword]]))
+            [multiplayer-online-battle.utils :as utils :refer [num->keyword keyword->num]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handler common
@@ -42,6 +42,29 @@
     (log/info "upload cmd-msg")
     (>!! cmd-msg-buffer payload)
     ))
+
+(defn find-winner [players]
+  (let [all-players (:all-players players)
+        pls-info (vals all-players)
+        num-alive (fn [coll]
+                    (->> coll
+                         (map #(:alive? %))
+                         (filter #(if % true false))
+                         (count)))
+        get-winner-id (fn [coll]
+                        (->> coll
+                             (filter #(if (= true (:alive? (second %))) true false))
+                             (into {})
+                             (keys)
+                             (first)))]
+    (if (= 1 (num-alive pls-info)) (keyword->num (get-winner-id all-players)) nil)))
+
+(defn handle-player-die [{:as ev-msg :keys [?data uid]}]
+  (let [ids-no-sender (no-sender uid)]
+    (swap! players assoc-in [:all-players (num->keyword uid) :alive?] false)
+    (broadcast ids-no-sender :gaming/player-die {:player-id (num->keyword uid)})
+    (when-let [id (find-winner @players)]
+      (broadcast [id] :gaming/you-are-winner {:player-id (num->keyword id)}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Game Lobby events handler
@@ -112,16 +135,15 @@
   (process-command ev-msg))
 
 (defmethod event :gaming/player-die
-  [{:as ev-msg :keys [uid ?data]}]
-  (log/info "player-die id" ?data "uid" uid)
-  (let [ids-no-sender (no-sender uid)]
-    (broadcast ids-no-sender :gaming/player-die {:player-id (num->keyword uid)})))
+  [{:as ev-msg}]
+  (handle-player-die ev-msg))
 
 (defmethod event :gaming/return-to-lobby
   [{:as ev-msg :keys [uid]}]
   (log/info "returne to lobby ")
   (swap! players assoc-in [:all-players (num->keyword uid) :status] (:unready utils/player-status)) ;;change cur-player status to unready on server
   (swap! players assoc-in [:all-players-ready] false)
+  (swap! players assoc-in [:all-players (num->keyword uid) :alive?] true)
   (broadcast [uid] :gaming/redirect {:dest "/gamelobby"})
   (broadcast :game-lobby/player-update (utils/target-player uid))
   ) 

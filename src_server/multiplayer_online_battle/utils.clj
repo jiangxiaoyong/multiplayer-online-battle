@@ -16,6 +16,9 @@
 (defn num->keyword [uid]
   (keyword (str uid)))
 
+(defn keyword->num [k]
+  (Long/parseLong (name k)))
+
 (defn- wrap-data [key data]
   (assoc {} key data))
 
@@ -32,20 +35,22 @@
 (defn- add-key-val [k v m]
   (assoc m k v))
 
-(defn- player-init-state [player img status time]
+(defn- player-init-state [player img status time alive]
   (fn [name]
     (->> player
          (add-key-val :avatar-img img)
          (add-key-val :status status)
          (add-key-val :time-stamp time)
-         (add-key-val :user-name  name))))
+         (add-key-val :user-name  name)
+         (add-key-val :alive? alive))))
 
 (defn create-player [name]
   (let [img (str (rand-int 8) ".png")
         status (:unready player-status)
         time (System/currentTimeMillis)
+        alive true
         player-map {}
-        player (player-init-state player-map img status time)]
+        player (player-init-state player-map img status time alive)]
     (player name)))
 
 (defn all-players []
