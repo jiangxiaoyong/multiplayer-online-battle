@@ -74,6 +74,7 @@
      (= :gaming/cmd-msg ev-type) (go
                                    (>! cmd-msg-ch (first payload-val)))
      (= :gaming/player-die ev-type) (swap! world update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (:player-id payload)) pls))))
+     (= :gaming/you-are-winner ev-type) (swap! world assoc-in [:winner] (:player-id payload))
      )))
 
 

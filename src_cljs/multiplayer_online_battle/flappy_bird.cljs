@@ -47,6 +47,16 @@
                  4)]
   (assoc st :score (if (neg? score) 0 score))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; winner
+;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn check-winner [cur-id {:keys [winner] :as st}]
+  (if-let [winner-id winner]
+    (when (= cur-id winner)
+      (assoc st :timer-running false))
+    st))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; pillars animation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -151,7 +161,8 @@
 
 (defn animation-update [time-stamp state]
   (let [cur-id (first (keys (:player-current @world)))
-        collision-flappy-cur? (partial collision? cur-id)]
+        collision-flappy-cur? (partial collision? cur-id)
+        iam-winner? (partial check-winner cur-id)]
     (-> state
         (assoc :cur-time time-stamp)
         (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :time-delta] (- time-stamp (:jump-start-time (second %)))) pls))))
@@ -160,6 +171,7 @@
         update-pillars-pair-height
         collision-flappy-cur?
         ground
+        iam-winner?
         ;;score
         )))
 
@@ -188,13 +200,13 @@
 (defn main []
   (fn []
     ;;(let [{:keys [flappy-y timer-running score ground-pos pillar-list]} @world])
-    (let [{:keys [all-players ground-pos pillar-list timer-running players-loaded?]} @world]
+    (let [{:keys [all-players ground-pos pillar-list timer-running players-loaded? winner]} @world]
       [:div#board-area
        [:div.board
         ;; [:h1.score score]
         (if-not timer-running
           [:a.start-button {:on-click #(go
-                                         (>! reactive-ch-in :gaming/return-to-lobby))} "RETURN"]
+                                         (>! reactive-ch-in :gaming/return-to-lobby))} (if-not (nil? winner) "WINNER!" "RETURN")]
           [:span])
         [:div (map pillar pillar-list)]
         (when players-loaded?
