@@ -10,7 +10,7 @@
             [multiplayer-online-battle.game-state :refer [players reset-game]]
             [multiplayer-online-battle.synchronization :refer [broadcast no-sender count-down cmd-msg-buffer] :as sync]
             [multiplayer-online-battle.websocket :as ws]
-            [multiplayer-online-battle.utils :as utils :refer [num->keyword keyword->num send-ev-msg]]))
+            [multiplayer-online-battle.utils :as utils :refer [num->keyword keyword->num]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handler common
