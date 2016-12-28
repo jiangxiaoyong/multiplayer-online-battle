@@ -64,6 +64,7 @@
      (= :game-lobby/pre-enter-game-count-down ev-type) (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload))
      (= :game-lobby/pre-enter-game-dest ev-type) (.assign js/window.location (:dest payload))
      (= :gaming/redirect ev-type) (.assign js/window.location (:dest payload))
+     (= :gaming/player-update ev-type) (swap! game-lobby-state assoc-in [:players-all who :status] (:status (first payload-val))) ;;TODO, same logic as game-lobby/player-update
      (= :gaming/player-current ev-type) (swap! world assoc :player-current payload)
      (= :gaming/players-all ev-type) (do
                                        (construct-all-flappy-state payload-keys payload-val)

@@ -36,8 +36,8 @@
      :else :unknow)))
 
 (defn start-ev-router []
-  (let [ws->lobby (chan)
-        ws->gaming (chan)]
+  (let [ws->lobby (chan 10)
+        ws->gaming (chan 10)] ;TODO, for event player-update from gaming page
     (go-loop []
       (let [ev-msg (<! ch-recv)
             {:as evmsg :keys [id ?data]} ev-msg]

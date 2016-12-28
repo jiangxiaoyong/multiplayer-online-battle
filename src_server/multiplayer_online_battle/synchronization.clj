@@ -37,6 +37,7 @@
 (defn- ev-msg-sink []
   (go-loop []
     (let [[uids payload] (<! broadcast-ch)]
+      (log/info "DEBUG: ev-msg-sink" uids payload)
       (utils/send-ev-msg uids payload))
     (recur)))
 

@@ -10,7 +10,7 @@
             [multiplayer-online-battle.game-state :refer [players reset-game]]
             [multiplayer-online-battle.synchronization :refer [broadcast no-sender count-down cmd-msg-buffer] :as sync]
             [multiplayer-online-battle.websocket :as ws]
-            [multiplayer-online-battle.utils :as utils :refer [num->keyword keyword->num]]))
+            [multiplayer-online-battle.utils :as utils :refer [num->keyword keyword->num send-ev-msg]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handler common
@@ -159,9 +159,8 @@
   (swap! players assoc-in [:all-players-ready] false)
   (swap! players assoc-in [:all-players (num->keyword uid) :alive?] true)
   (swap! players assoc-in [:all-players (num->keyword uid) :game-loaded?] false)
-  (broadcast [uid] :gaming/redirect {:dest "/gamelobby"})
   (broadcast :game-lobby/player-update (utils/target-player uid))
-  ) 
+  (broadcast [uid] :gaming/redirect {:dest "/gamelobby"})) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set up Sente events router
