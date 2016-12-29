@@ -5,6 +5,7 @@
             ))
 
 (def players-init-state {:all-players-ready false
+                         :in-battle? false
                          :all-players {}})
 (def players (atom players-init-state))
 

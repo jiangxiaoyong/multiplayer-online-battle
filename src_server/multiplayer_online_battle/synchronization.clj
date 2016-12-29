@@ -18,6 +18,9 @@
 
 (def m-filter-out-id (memoize filter-out-id))
 (def cmd-msg-ch (chan))
+(def sync-game-world-ch (chan))
+
+;; broadcast sync
 
 (defn no-sender [s-id]
   (m-filter-out-id s-id (:ws @ws/connected-uids)))
@@ -40,10 +43,32 @@
       (utils/send-ev-msg uids payload))
     (recur)))
 
+;; game-lobby sync
+
 (defn count-down [ev data]
   (doseq [count data]
     (Thread/sleep 1000)
     (broadcast ev {:count count})))
+
+;; gaming world pillars sync
+
+(defn pillars-generator [ev flappy-start-y pillar-gap]
+  (future
+    (while (:in-battle? @players)
+      (do
+        (broadcast ev {:new-pillar (+ 150 (rand-int (- flappy-start-y pillar-gap)))})
+        (Thread/sleep 2000)))))
+
+(defn go-game-world []
+  (go-loop []
+    (let [ev (<! sync-game-world-ch)
+          flappy-start-y 300
+          pillar-gap 170]
+      (when ev
+        (pillars-generator :gaming/new-pillar flappy-start-y pillar-gap)))
+    (recur)))
+
+;; gaming cmd-msg sync
 
 (defn pack-cmd-msg []
   (loop [accu []]
@@ -67,7 +92,10 @@
       (broadcast ev wrap-cmd-msgs))
     (recur)))
 
+;; init fn
+
 (defn init-sync []
   (ev-msg-sink)
+  (go-game-world)
   (go-cmd-msg)
   (cmd-msg-sink :gaming/cmd-msg))

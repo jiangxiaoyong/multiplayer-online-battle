@@ -22,6 +22,7 @@
                                                :btn-ready-animated "fa fa-circle-o-notch fa-spin"
                                                :btn-unready "btn btn-success btn-lg btn-block"
                                                :btn-unready-label "Ready"
+                                               :btn-not-active "not-active btn btn-success btn-lg btn-block"
                                                }
                                        :player-status{:ready 0
                                                       :unready 1
@@ -61,5 +62,3 @@
                             :gap-top 200}]})
 
 (def world (r/atom world-staring-state))
-
-

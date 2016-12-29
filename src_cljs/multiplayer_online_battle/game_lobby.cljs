@@ -53,17 +53,22 @@
     (fn [game-lobby-out]
       (let [player-status (:status (:player-current @game-lobby-state))
             all-players-ready? (:all-players-ready @game-lobby-state)
+            num-players (count (keys (:players-all @game-lobby-state)))
             style-btn-ready-label (get-state-value "game-lobby style btn-ready-label")
             style-btn-ready-animated (get-state-value "game-lobby style btn-ready-animated")
             style-btn-ready (get-state-value "game-lobby style btn-ready")
             style-btn-unready (get-state-value "game-lobby style btn-unready")
             style-btn-unready-label (get-state-value "game-lobby style btn-unready-label")
+            style-btn-not-active (get-state-value "game-lobby style btn-not-active")
             player-status-ready (get-state-value "game-lobby player-status ready")
             player-status-unready (get-state-value "game-lobby player-status unready")
             player-status-gaming (get-state-value "game-lobby player-status gaming")]
-        [:a {:class (if (= player-status player-status-ready) style-btn-ready style-btn-unready)
+        (print "not active" style-btn-not-active)
+        [:a {:class (if (< num-players 2) style-btn-not-active
+                        (if (= player-status player-status-ready) style-btn-ready style-btn-unready))
              :href "#"
              :role "button"
+             :disabled (if (< num-players 2) true false)
              :on-click #(do 
                           (swap! game-lobby-state assoc-in [:player-current :status] player-status-ready)
                           (go (>! game-lobby-out [:game-lobby/player-ready {:payload (:player-current @game-lobby-state)}])))}

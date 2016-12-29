@@ -8,7 +8,7 @@
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.game-state :refer [players reset-game]]
-            [multiplayer-online-battle.synchronization :refer [broadcast no-sender count-down cmd-msg-buffer] :as sync]
+            [multiplayer-online-battle.synchronization :refer [broadcast no-sender count-down cmd-msg-buffer sync-game-world-ch] :as sync]
             [multiplayer-online-battle.websocket :as ws]
             [multiplayer-online-battle.utils :as utils :refer [num->keyword keyword->num]]))
 
@@ -64,7 +64,8 @@
     (swap! players assoc-in [:all-players (num->keyword uid) :alive?] false)
     (broadcast ids-no-sender :gaming/player-die {:player-id (num->keyword uid)})
     (when-let [id (find-winner @players)]
-      (broadcast [id] :gaming/you-are-winner {:player-id (num->keyword id)}))))
+      (broadcast [id] :gaming/you-are-winner {:player-id (num->keyword id)})
+      (swap! players assoc-in [:in-battle?] false))))
 
 (defn check-all-game-loaded [players]
   (if-not (empty? (:all-players players))
@@ -74,6 +75,8 @@
 (defn handle-game-loaded [{:as ev-msg :keys [?data uid]}]
   (swap! players assoc-in [:all-players (num->keyword uid) :game-loaded?] true)
   (when (check-all-game-loaded @players)
+    (swap! players assoc-in [:in-battle?] true)
+    (>!! sync-game-world-ch true)
     (broadcast :gaming/game-loaded {:all-game-loaded true})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
