@@ -63,7 +63,6 @@
             player-status-ready (get-state-value "game-lobby player-status ready")
             player-status-unready (get-state-value "game-lobby player-status unready")
             player-status-gaming (get-state-value "game-lobby player-status gaming")]
-        (print "not active" style-btn-not-active)
         [:a {:class (if (< num-players 2) style-btn-not-active
                         (if (= player-status player-status-ready) style-btn-ready style-btn-unready))
              :href "#"
@@ -90,16 +89,18 @@
 
 (defn main [game-lobby-in game-lobby-out]
   (fn []
-    [:div.game-loby-container.aa
+    [:div.game-lobby-container
      [:div.row
-      [:div.col-lg-8
+      [:div.col-lg-3]
+      [:div.col-lg-6
        [:div.main-box.clearfix
         [:div.table-responsive
          [:div.game-loby-title "Game lobby"]
          [players-table]
          [:div
           [:center
-           [statusBtn game-lobby-out]]]]]]]]))
+           [statusBtn game-lobby-out]]]]]]
+      [:div.col-lg-3]]]))
 
 (defn game-lobby []
   (let [{:keys [game-lobby-in game-lobby-out]} (game-lobby-ch)]

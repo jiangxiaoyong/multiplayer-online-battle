@@ -5,7 +5,7 @@
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.states :refer [components-state game-lobby-state world flap-starting-state start-game? game-loaded?]]
+            [multiplayer-online-battle.states :refer [components-state game-lobby-state world flap-starting-state start-game? game-loaded? pillar-buf]]
             [multiplayer-online-battle.comm :refer [cmd-msg-ch]]))
 
 (enable-console-print!)
@@ -78,6 +78,7 @@
                                        (swap! world assoc-in [:timer-running] true)
                                        (go
                                          (>! start-game? true)))
+     (= :gaming/new-pillar ev-type) (swap! world assoc-in [:new-pillar-height] (:new-pillar payload))
      )))
 
 

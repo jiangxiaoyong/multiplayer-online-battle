@@ -46,6 +46,7 @@
 (defn find-winner [players]
   (let [all-players (:all-players players)
         pls-info (vals all-players)
+        num-players (count (keys all-players))
         num-alive (fn [coll]
                     (->> coll
                          (map #(:alive? %))
@@ -57,7 +58,8 @@
                              (into {})
                              (keys)
                              (first)))]
-    (if (= 1 (num-alive pls-info)) (keyword->num (get-winner-id all-players)) nil)))
+    (if (= 1 num-players) (first (keys all-players))
+        (if (= 1 (num-alive pls-info)) (keyword->num (get-winner-id all-players)) nil))))
 
 (defn handle-player-die [{:as ev-msg :keys [?data uid]}]
   (let [ids-no-sender (no-sender uid)]

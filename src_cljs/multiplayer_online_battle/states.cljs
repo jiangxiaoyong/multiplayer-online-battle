@@ -2,7 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
-            [cljs.core.async :refer [<! >! put! take! chan close! timeout]]))
+            [cljs.core.async :refer [<! >! put! take! chan close! timeout dropping-buffer]]))
 
 (enable-console-print!)
 
@@ -39,6 +39,7 @@
 
 (def start-game? (chan))
 (def game-loaded? (chan)) ;;TODO need to immplement in reactive
+(def pillar-buf (chan (dropping-buffer 100)))
 
 (def flap-starting-state {:flappy-y 300
                           :flappy-x 0
@@ -55,6 +56,7 @@
                           :cur-time 0
                           :ground-pos 0
                           :winner nil
+                          :new-pillar-height 0
                           :pillar-list
                           [{:start-time 0
                             :start-pos-x 1200

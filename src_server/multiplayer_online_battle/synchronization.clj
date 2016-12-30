@@ -57,7 +57,7 @@
     (while (:in-battle? @players)
       (do
         (broadcast ev {:new-pillar (+ 150 (rand-int (- flappy-start-y pillar-gap)))})
-        (Thread/sleep 2000)))))
+        (Thread/sleep 1000)))))
 
 (defn go-game-world []
   (go-loop []

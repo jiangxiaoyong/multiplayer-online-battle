@@ -7,7 +7,7 @@
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.states :refer [components-state flap-starting-state world-staring-state world start-game?]]
+            [multiplayer-online-battle.states :refer [components-state flap-starting-state world-staring-state world start-game? pillar-buf]]
             [multiplayer-online-battle.reactive :refer [reactive-ch-in]]
             [multiplayer-online-battle.utils :refer [ev-msg]]
             ))
@@ -36,6 +36,10 @@
 
 (defn px [n]
   (str n "px"))
+
+(defn get-new-pillar []
+  (go
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Score
@@ -103,13 +107,13 @@
 (defn curr-pillar-pos [cur-time {:keys [start-pos-x start-time] }]
   (translate start-pos-x ground-move-speed (- cur-time start-time)))
 
-(defn new-pillar [cur-time start-pos-x]
+(defn new-pillar [cur-time start-pos-x new-pillar-height]
   {:start-time cur-time
    :start-pos-x start-pos-x
    :cur-x      start-pos-x
-   :gap-top    (+ 150 (rand-int (- flappy-start-y pillar-gap)))})
+   :gap-top    new-pillar-height})
 
-(defn update-pillars-list [{:keys [pillar-list cur-time] :as st}]
+(defn update-pillars-list [{:keys [pillar-list cur-time new-pillar-height] :as st}]
   (let [pillars-with-pos (map #(assoc % :cur-x (curr-pillar-pos cur-time %)) pillar-list)
         pillars-in-world (sort-by
                           :cur-x
@@ -122,7 +126,8 @@
               (new-pillar
                cur-time
                (+ pillar-spacing
-                  (:cur-x (last pillars-in-world)))))
+                  (:cur-x (last pillars-in-world)))
+               new-pillar-height))
         pillars-in-world))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
