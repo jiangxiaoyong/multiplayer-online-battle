@@ -14,8 +14,6 @@
 (def arrow-keys #{37 38 39 40})
 (def space-key #{32})
 
-(def cmd-msg-ch (chan)) ;; TODO, need to remove
-
 ;;; keyboard event stream ;;;
 
 (defn key-ev [type]
@@ -42,14 +40,6 @@
 
 ;;; command messages stream ;;;
 
-(defn create-cmd-msg-stream []
-  (-> js/Rx.Observable
-      (.create (fn [observer]
-                 (go-loop []
-                   (let [cmd-msg (<! cmd-msg-ch)]
-                     (.onNext observer cmd-msg))
-                   (recur))))))
-
 (defn publish [topic content]
   (go
     (>! reactive-publisher {:topic topic :content content})))
@@ -59,7 +49,7 @@
         data {:player-id cur-id
               :key-type (.-type action)
               :key-code (.-keyCode action)}]
-    (publish :push->game-ctrl {:ev :upload-cmd-msg :data (ev-msg :gaming/command data)})))
+    (publish :gaming-ev {:ev :upload-cmd-msg :payload data})))
 
 ;;; game events stream ;;;
 
@@ -75,10 +65,6 @@
                         (.publish)
                         (.refCount)))
 
-(defn common-ev []
-  (-> game-ev-stream
-      (.filter (fn [ev] (if (= :common-ev (:where ev)) true false)))))
-
 (defn game-lobby-ev []
   (-> game-ev-stream
       (.filter (fn [ev] (if (= :game-lobby (:where ev)) true false)))))
@@ -87,53 +73,12 @@
   (-> game-ev-stream
       (.filter (fn [ev] (if (= :gaming (:where ev)) true false)))))
 
-;;; TODO ;;;
-
-(defn return-to-lobby-ev []
-  (-> game-ev-stream
-      (.filter (fn [ev]
-                 (if (= ev :gaming/return-to-lobby) true false)))))
-
-(defn player-die-ev []
-  (-> game-ev-stream
-      (.filter (fn [ev]
-                 (if (= ev :gaming/player-die) true false)))))
-
-(defn upload-player-state [state]
-  (let [cur-id (first (keys (:player-current @world)))
-        data {:player-id cur-id}]
-    (publish :push->game-ctrl {:ev :upload-player-state :data (ev-msg :gaming/player-die data)})))
-
-(defn init-reactive [])
-
 ;;; subscribe events ;;;
 
 (.subscribe (key-space-up-only)
             (fn [a] (upload-cmd-msg a))
             (fn [e] (print "key pressing up event error" e))
             (fn [c] (print "key pressing up event complete" c)))
-
-(.subscribe (create-cmd-msg-stream)
-            (fn [cmd-msg] (do
-                      (print "cms-msg stream" cmd-msg)
-                      (publish :push->game-ctrl {:ev :cmd-msg-stream :data cmd-msg})))
-            (fn [e] (print "cmd-msg error" e))
-            (fn [c] (print "cms-msg complete" c)))
-
-(.subscribe (return-to-lobby-ev)
-            (fn [ev] (publish :push->game-ctrl {:ev :return-to-lobby :data (ev-msg ev {})}))
-            (fn [e] (print "ctrl error" e))
-            (fn [c] (print "ctrl complete" c)))
-
-(.subscribe (player-die-ev)
-            (fn [ev] (upload-player-state ev))
-            (fn [e] (print "ctrl error" e))
-            (fn [c] (print "ctrl complete" c)))
-
-(.subscribe (common-ev)
-            (fn [ev] (publish :common-ev {:ev (:ev ev) :payload (:payload ev)}))
-            (fn [e] (print "common-ev error" e))
-            (fn [c] (print "common-ev complete" c)))
 
 (.subscribe (game-lobby-ev)
             (fn [ev] (publish :game-lobby-ev {:ev (:ev ev) :payload (:payload ev)}))

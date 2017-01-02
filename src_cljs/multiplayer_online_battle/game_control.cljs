@@ -2,7 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! >! chan sliding-buffer put! close! timeout pub sub]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.states :refer [components-state game-lobby-state world flap-starting-state start-game? game-loaded? pillar-buf]]
+            [multiplayer-online-battle.states :refer [components-state game-lobby-state world flap-starting-state pillar-buf]]
             [multiplayer-online-battle.flappy-bird :refer [animation-loop flappy-bird-ui]]
             [multiplayer-online-battle.utils :refer [mount-dom ev-msg]]
             [multiplayer-online-battle.network :refer [init-network network-ch-in chsk-ready?]]
@@ -11,6 +11,8 @@
 ;;;;;;;;;;;;;;;;;;;; gaming control
 
 (def gaming-ev-ch (chan))
+(def start-game? (chan))
+(def game-loaded? (chan))
 
 (defn sub-gaming-ev []
   (sub reactive-publication :gaming-ev gaming-ev-ch))
@@ -25,7 +27,8 @@
           :jump-start-time cur-time
           :jump-step jump-step)))
 
-(defn handle-cmd-msg-stream [cmd-msg-stream]
+(defn cmd-msg-stream-handler [cmd-msg-stream]
+  (print "cmd-msg" cmd-msg-stream)
   (doseq [msg cmd-msg-stream]
     (let [key-type (:key-type msg)
           key-code (:key-code msg)
@@ -49,13 +52,43 @@
 ;;                                      (>! network-ch-in data))))
 ;;     (recur)))
 
+(defn- construct-all-flappy-state [p-ids p-info]
+  (loop [ids p-ids
+         info p-info
+         states (map #(assoc flap-starting-state :flappy-x %) (->> (iterate #(+ 80 %) 212)
+                                                                   (take (count ids))))]
+    (when-not (empty? ids)
+      (swap! world assoc-in [:all-players (first ids)] (merge (first states) (first info)))
+      (recur (rest ids) (rest info) (rest states)))))
+
 (defn init-gaming-ev-handler []
   (sub-gaming-ev)
   (go-loop []
     (let [content (:content (<! gaming-ev-ch))
-          ev (:ev content)]
+          ev (:ev content)
+          payload (:payload content)
+          payload-val (vals payload)
+          payload-keys (keys payload)
+          who (first (keys payload))]
       (cond
-       (= ev :player-current) (print "gaming-ev handler")))
+       (= ev :redirect) (.assign js/window.location (:dest payload))
+       (= ev :player-current) (swap! world assoc :player-current payload)
+       (= ev :players-all) (do
+                             (construct-all-flappy-state payload-keys payload-val)
+                             (swap! world assoc-in [:game-loaded?] true)
+                             (go (>! game-loaded? true)))
+       (= ev :player-die) (swap! world update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (:player-id payload)) pls))))
+       (= ev :you-are-winner) (swap! world assoc-in [:winner] (:player-id payload))
+       (= ev :game-loaded) (when (:all-game-loaded payload)
+                             (swap! world assoc-in [:timer-running] true)
+                             (go
+                               (>! start-game? true)))
+       (= ev :new-pillar) (swap! world assoc-in [:new-pillar-height] (:new-pillar payload))
+       (= ev :cmd-msg) (cmd-msg-stream-handler (first payload-val))
+       (= ev :return-to-lobby) (go (>! network-ch-in (ev-msg :gaming/return-to-lobby payload)))
+       (= ev :iam-dead) (go (>! network-ch-in (ev-msg :gaming/iam-dead payload)))
+       (= ev :upload-cmd-msg) (go (>! network-ch-in (ev-msg :gaming/command payload)))
+       ))
     (recur)))
 
 (defn load-gaming-state []

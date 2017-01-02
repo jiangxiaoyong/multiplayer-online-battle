@@ -63,22 +63,22 @@
      ;;(= :game-lobby/all-players-ready ev-type) (swap! game-lobby-state update-in [:all-players-ready] not)
      ;;(= :game-lobby/pre-enter-game-count-down ev-type) (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload))
      ;;(= :game-lobby/pre-enter-game-dest ev-type) (.assign js/window.location (:dest payload))
-     (= :gaming/redirect ev-type) (.assign js/window.location (:dest payload))
-     (= :gaming/player-current ev-type) (swap! world assoc :player-current payload)
-     (= :gaming/players-all ev-type) (do
-                                       (construct-all-flappy-state payload-keys payload-val)
-                                       (swap! world assoc-in [:game-loaded?] true)
-                                       (go
-                                         (>! game-loaded? true))) ;;TODO, refactor in reactive
-     (= :gaming/cmd-msg ev-type) (go
-                                   (>! cmd-msg-ch (first payload-val)))
-     (= :gaming/player-die ev-type) (swap! world update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (:player-id payload)) pls))))
-     (= :gaming/you-are-winner ev-type) (swap! world assoc-in [:winner] (:player-id payload))
-     (= :gaming/game-loaded ev-type) (when (:all-game-loaded payload)
-                                       (swap! world assoc-in [:timer-running] true)
-                                       (go
-                                         (>! start-game? true)))
-     (= :gaming/new-pillar ev-type) (swap! world assoc-in [:new-pillar-height] (:new-pillar payload))
+     ;;(= :gaming/redirect ev-type) (.assign js/window.location (:dest payload))
+     ;;(= :gaming/player-current ev-type) (swap! world assoc :player-current payload)
+     ;; (= :gaming/players-all ev-type) (do
+     ;;                                   (construct-all-flappy-state payload-keys payload-val)
+     ;;                                   (swap! world assoc-in [:game-loaded?] true)
+     ;;                                   (go
+     ;;                                     (>! game-loaded? true))) ;;TODO, refactor in reactive
+     ;; (= :gaming/cmd-msg ev-type) (go
+     ;;                               (>! cmd-msg-ch (first payload-val)))
+     ;;(= :gaming/player-die ev-type) (swap! world update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (:player-id payload)) pls))))
+     ;;(= :gaming/you-are-winner ev-type) (swap! world assoc-in [:winner] (:player-id payload))
+     ;; (= :gaming/game-loaded ev-type) (when (:all-game-loaded payload)
+     ;;                                   (swap! world assoc-in [:timer-running] true)
+     ;;                                   (go
+     ;;                                     (>! start-game? true)))
+     ;;(= :gaming/new-pillar ev-type) (swap! world assoc-in [:new-pillar-height] (:new-pillar payload))
      )))
 
 

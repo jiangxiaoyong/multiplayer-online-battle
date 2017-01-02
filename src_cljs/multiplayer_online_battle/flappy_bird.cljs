@@ -84,7 +84,7 @@
                    (bottom-collision? flappy-player)) pillar-list)
       (do 
         (go
-          (>! reactive-ch-in :gaming/player-die))
+          (>! reactive-ch-in {:where :gaming :ev :iam-dead :payload {}}))
         (assoc st :timer-running false))
       st)))
 
@@ -207,7 +207,7 @@
         ;; [:h1.score score]
         (if-not timer-running
           [:a.start-button {:on-click #(go
-                                         (>! reactive-ch-in :gaming/return-to-lobby))} (if-not (nil? winner) "WINNER!" "RETURN")]
+                                         (>! reactive-ch-in {:where :gaming :ev :return-to-lobby :payload {}}))} (if-not (nil? winner) "WINNER!" "RETURN")]
           [:span])
         [:div (map pillar pillar-list)]
         (when game-loaded?
