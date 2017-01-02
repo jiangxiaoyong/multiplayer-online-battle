@@ -128,7 +128,7 @@
 
 ;; game-looby events
 
-(defmethod event :game-lobby/lobby-state?
+(defmethod event :game-lobby/states
   [{:as ev-msg :keys [uid]}]
   (return-players-state uid "game-lobby"))
 
@@ -141,7 +141,7 @@
 
 ;; gaming events
 
-(defmethod event :gaming/gaming-state?
+(defmethod event :gaming/states
   [{:as ev-msg :keys [uid]}]
   (return-players-state uid "gaming"))
 
@@ -149,7 +149,7 @@
   [{:as ev-msg}]
   (process-command ev-msg))
 
-(defmethod event :gaming/player-die
+(defmethod event :gaming/iam-dead
   [{:as ev-msg}]
   (handle-player-die ev-msg))
 
