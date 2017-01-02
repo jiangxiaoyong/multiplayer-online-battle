@@ -2,18 +2,20 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! >! chan sliding-buffer put! close! timeout pub sub]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.states :refer [world start-game? game-loaded?]]
+            [multiplayer-online-battle.states :refer [components-state game-lobby-state world flap-starting-state start-game? game-loaded? pillar-buf]]
             [multiplayer-online-battle.flappy-bird :refer [animation-loop flappy-bird-ui]]
             [multiplayer-online-battle.utils :refer [mount-dom ev-msg]]
-            [multiplayer-online-battle.network :refer [init-network network-ch-in]]
-            [multiplayer-online-battle.comm :refer [chsk-ready?]]
+            [multiplayer-online-battle.network :refer [init-network network-ch-in chsk-ready?]]
             [multiplayer-online-battle.reactive :refer [reactive-publication]]))
 
-(def jump-step 7)
-(def subscribe->reactive (chan))
+;;;;;;;;;;;;;;;;;;;; gaming control
 
-(defn sub-reactive []
-  (sub reactive-publication :push->game-ctrl subscribe->reactive))
+(def gaming-ev-ch (chan))
+
+(defn sub-gaming-ev []
+  (sub reactive-publication :gaming-ev gaming-ev-ch))
+
+(def jump-step 7)
 
 (defn jump [{:keys [jump-count] :as state} cur-time]
   (infof "jump!")
@@ -31,29 +33,38 @@
           cur-time (:cur-time @world)]
       (swap! world update-in [:all-players player-id] jump cur-time))))
 
-(defn init-subscribe->reactive []
-  (sub-reactive)
+;; (defn init-subscribe->reactive []
+;;   (sub-reactive)
+;;   (go-loop []
+;;     (let [content (:content (<! subscribe->reactive))
+;;           ev (:ev content)
+;;           data (:payload content)]
+;;       (cond
+;;        (= ev :return-to-lobby) (go
+;;                                  (>! network-ch-in data))
+;;        (= ev :upload-cmd-msg) (go
+;;                                 (>! network-ch-in data))
+;;        (= ev :cmd-msg-stream) (handle-cmd-msg-stream data)
+;;        (= ev :upload-player-state) (go
+;;                                      (>! network-ch-in data))))
+;;     (recur)))
+
+(defn init-gaming-ev-handler []
+  (sub-gaming-ev)
   (go-loop []
-    (let [content (:content (<! subscribe->reactive))
-          ev (:ev content)
-          data (:data content)]
+    (let [content (:content (<! gaming-ev-ch))
+          ev (:ev content)]
       (cond
-       (= ev :return-to-lobby) (go
-                                 (>! network-ch-in data))
-       (= ev :upload-cmd-msg) (go
-                                (>! network-ch-in data))
-       (= ev :cmd-msg-stream) (handle-cmd-msg-stream data)
-       (= ev :upload-player-state) (go
-                                     (>! network-ch-in data))))
+       (= ev :player-current) (print "gaming-ev handler")))
     (recur)))
 
-(defn load-game-state []
+(defn load-gaming-state []
   (go
     (let [ready (<! chsk-ready?)]
       (when ready
-        (>! network-ch-in (ev-msg :gaming/gaming-state? {}))))))
+        (>! network-ch-in (ev-msg :gaming/states {}))))))
 
-(defn game-loaded-notice []
+(defn gaming-loaded-notice []
   (go
     (let [loaded (<! game-loaded?)]
       (when loaded
@@ -80,17 +91,64 @@
       (when fire
         (start-game)))))
 
-(defn init-game []
+;;;;;;;;;;;;;;;;;;;; game-lobby-control
+
+(defn player-exist? [id]
+  (if (contains? (:players-all @game-lobby-state) id)
+    true
+    false))
+
+(def game-lobby-ev-ch (chan))
+
+(defn sub-game-lobby-ev []
+  (sub reactive-publication :game-lobby-ev game-lobby-ev-ch))
+
+(defn init-game-lobby-ev-handler []
+  (sub-game-lobby-ev)
+  (go-loop []
+    (let [content (:content (<! game-lobby-ev-ch))
+          ev (:ev content)
+          payload (:payload content)
+          payload-val (vals payload)
+          payload-keys (keys payload)
+          who (first (keys payload))]
+      (infof "game-lobby receiving event %s" content)
+      (cond
+       (= ev :player-current) (swap! game-lobby-state assoc :player-current (first payload-val))
+       (= ev :players-all) (swap! game-lobby-state assoc :players-all payload)
+       (= ev :player-come) (if-not (player-exist? who) (swap! game-lobby-state update-in [:players-all] conj payload))
+       (= ev :player-update) (swap! game-lobby-state assoc-in [:players-all who :status] (:status (first payload-val)))
+       (= ev :player-leave) (swap! game-lobby-state update-in [:players-all] (fn [pls] (into {} (remove #(= (first %) (first payload-keys)) pls))))
+       (= ev :player-ready) (go (>! network-ch-in (ev-msg :game-lobby/player-ready payload)))
+       (= ev :all-players-ready) (swap! game-lobby-state update-in [:all-players-ready] not)
+       (= ev :pre-enter-game-count-down) (swap! components-state assoc-in [:game-lobby :style :btn-ready-label] (:count payload))
+       (= ev :pre-enter-game-dest) (.assign js/window.location (:dest payload))))
+    (recur)))
+
+(defn load-game-lobby-state []
+  (go
+    (let [ready (<! chsk-ready?)]
+      (when ready
+        (>! network-ch-in (ev-msg :game-lobby/states {}))))))
+
+;;; init fn ;;;
+
+(defn init-gaming []
   (init-network)
-  (init-subscribe->reactive)
-  (load-game-state)
-  (game-loaded-notice)
+  (init-gaming-ev-handler)
+  (load-gaming-state)
+  (gaming-loaded-notice)
   (fire-game))
+
+(defn init-game-lobby []
+  (init-network)
+  (init-game-lobby-ev-handler)
+  (load-game-lobby-state))
 
 (defn fig-reload []
   (.log js/console "figwheel reloaded! ")
   (mount-dom #'flappy-bird-ui))
 
 (defn ^:export run []
-  (init-game)
+  (init-gaming)
   (mount-dom #'flappy-bird-ui))

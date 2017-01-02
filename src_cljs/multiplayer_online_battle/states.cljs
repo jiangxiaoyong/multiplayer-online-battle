@@ -32,7 +32,7 @@
 
 ;; Game lobby state
 
-(def game-lobby-init-state {:all-players-ready false :chsk-ready? false})
+(def game-lobby-init-state {:all-players-ready false})
 (def game-lobby-state (r/atom game-lobby-init-state))
 
 ;; Flappy-bird state

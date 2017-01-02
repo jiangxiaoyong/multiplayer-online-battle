@@ -6,9 +6,10 @@
             [reagent.core :as r :refer [atom]]
             [reagent.debug :refer [dbg log prn]]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
-            [multiplayer-online-battle.comm :refer [reconnect start-comm game-lobby-ch chsk-ready?]]
+            [multiplayer-online-battle.reactive :refer [reactive-ch-in]]
             [multiplayer-online-battle.states :refer [components-state game-lobby-state game-lobby-init-state]]
-            [multiplayer-online-battle.utils :refer [mount-dom handle-ev-msg]]))
+            [multiplayer-online-battle.utils :refer [mount-dom]]
+            [multiplayer-online-battle.game-control :refer [init-game-lobby]]))
 
 (enable-console-print!)
 
@@ -50,7 +51,7 @@
 
 (defn statusBtn []
   (let []
-    (fn [game-lobby-out]
+    (fn []
       (let [player-status (:status (:player-current @game-lobby-state))
             all-players-ready? (:all-players-ready @game-lobby-state)
             num-players (count (keys (:players-all @game-lobby-state)))
@@ -70,7 +71,7 @@
              :disabled (if (< num-players 2) true false)
              :on-click #(do 
                           (swap! game-lobby-state assoc-in [:player-current :status] player-status-ready)
-                          (go (>! game-lobby-out [:game-lobby/player-ready {:payload (:player-current @game-lobby-state)}])))}
+                          (go (>! reactive-ch-in {:where :game-lobby :ev :player-ready :payload (:player-current @game-lobby-state)})))}
          [:sapn {:class (if (= player-status player-status-ready) style-btn-ready-animated)}]
          [:div.status-btn-label (if (= player-status player-status-ready) style-btn-ready-label style-btn-unready-label)]]))))
 
@@ -87,7 +88,7 @@
       (for [player (vals (:players-all @game-lobby-state))]
         ^{:key (:time-stamp player)} [player-info player])]]))
 
-(defn main [game-lobby-in game-lobby-out]
+(defn main []
   (fn []
     [:div.game-lobby-container
      [:div.row
@@ -99,33 +100,23 @@
          [players-table]
          [:div
           [:center
-           [statusBtn game-lobby-out]]]]]]
+           [statusBtn]]]]]]
       [:div.col-lg-3]]]))
 
 (defn game-lobby []
-  (let [{:keys [game-lobby-in game-lobby-out]} (game-lobby-ch)]
-    (r/create-class
-     {:reagent-render (fn []
-                        [main game-lobby-in game-lobby-out])
-      :component-will-mount (fn [_]
-                              (log "game lobby will mount")
-                              (reset-game-lobby-state)
-                              (go
-                                (let [ready? (<! chsk-ready?)]
-                                  (when ready?
-                                    (>! game-lobby-out [:game-lobby/lobby-state?])))))
-      :component-did-mount (fn [_]
-                             (log "game lobby did mount")
-                             (go-loop []
-                               (let [ev-msg (<! game-lobby-in)]
-                                 (debugf "game looby receiving: %s" ev-msg)
-                                 (handle-ev-msg ev-msg))
-                               (recur)))})))
+  (r/create-class
+   {:reagent-render (fn []
+                      [main])
+    :component-will-mount (fn [_]
+                            (log "game lobby will mount")
+                            (reset-game-lobby-state))
+    :component-did-mount (fn [_]
+                           (log "game lobby did mount"))}))
 
 (defn fig-reload []
   (.log js/console "game lobby figwheel reloaded! ")
   (mount-dom #'game-lobby))
 
 (defn ^:export run []
-  (start-comm)
+  (init-game-lobby)
   (mount-dom #'game-lobby))
