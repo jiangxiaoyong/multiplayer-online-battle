@@ -8,7 +8,7 @@
             [multiplayer-online-battle.network :refer [init-network network-ch-in chsk-ready?]]
             [multiplayer-online-battle.reactive :refer [reactive-publication]]))
 
-;;;;;;;;;;;;;;;;;;;; gaming control
+;;; gaming control ;;;
 
 (def gaming-ev-ch (chan))
 (def start-game? (chan))
@@ -35,22 +35,6 @@
           player-id (:player-id msg)
           cur-time (:cur-time @world)]
       (swap! world update-in [:all-players player-id] jump cur-time))))
-
-;; (defn init-subscribe->reactive []
-;;   (sub-reactive)
-;;   (go-loop []
-;;     (let [content (:content (<! subscribe->reactive))
-;;           ev (:ev content)
-;;           data (:payload content)]
-;;       (cond
-;;        (= ev :return-to-lobby) (go
-;;                                  (>! network-ch-in data))
-;;        (= ev :upload-cmd-msg) (go
-;;                                 (>! network-ch-in data))
-;;        (= ev :cmd-msg-stream) (handle-cmd-msg-stream data)
-;;        (= ev :upload-player-state) (go
-;;                                      (>! network-ch-in data))))
-;;     (recur)))
 
 (defn- construct-all-flappy-state [p-ids p-info]
   (loop [ids p-ids
@@ -124,7 +108,7 @@
       (when fire
         (start-game)))))
 
-;;;;;;;;;;;;;;;;;;;; game-lobby-control
+;;; game-lobby-control ;;;
 
 (defn player-exist? [id]
   (if (contains? (:players-all @game-lobby-state) id)

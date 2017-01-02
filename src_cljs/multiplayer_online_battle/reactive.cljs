@@ -40,16 +40,14 @@
 
 ;;; command messages stream ;;;
 
-(defn publish [topic content]
-  (go
-    (>! reactive-publisher {:topic topic :content content})))
-
-(defn upload-cmd-msg [action]
-  (let [cur-id (first (keys (:player-current @world)))
-        data {:player-id cur-id
-              :key-type (.-type action)
-              :key-code (.-keyCode action)}]
-    (publish :gaming-ev {:ev :upload-cmd-msg :payload data})))
+(defn cmd-msg-stream []
+  (-> (key-space-up-only)
+      (.map (fn [k]
+              {:where :gaming
+               :ev :upload-cmd-msg
+               :payload {:player-id (first (keys (:player-current @world)))
+                         :key-type (.-type k)
+                         :key-code (.-keyCode k)}}))))
 
 ;;; game events stream ;;;
 
@@ -71,14 +69,14 @@
 
 (defn gaming-ev []
   (-> game-ev-stream
-      (.filter (fn [ev] (if (= :gaming (:where ev)) true false)))))
+      (.filter (fn [ev] (if (= :gaming (:where ev)) true false)))
+      (.merge (cmd-msg-stream))))
 
 ;;; subscribe events ;;;
 
-(.subscribe (key-space-up-only)
-            (fn [a] (upload-cmd-msg a))
-            (fn [e] (print "key pressing up event error" e))
-            (fn [c] (print "key pressing up event complete" c)))
+(defn publish [topic content]
+  (go
+    (>! reactive-publisher {:topic topic :content content})))
 
 (.subscribe (game-lobby-ev)
             (fn [ev] (publish :game-lobby-ev {:ev (:ev ev) :payload (:payload ev)}))

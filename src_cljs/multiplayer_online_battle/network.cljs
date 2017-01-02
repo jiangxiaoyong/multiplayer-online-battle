@@ -5,7 +5,6 @@
             [taoensso.sente  :as sente :refer (cb-success?)]
             [taoensso.timbre :as timbre :refer (tracef debugf infof warnf errorf)]
             [multiplayer-online-battle.states :refer [game-lobby-state world]]
-            [multiplayer-online-battle.utils :refer [handle-ev-msg]]
             [multiplayer-online-battle.reactive :refer [reactive-ch-in]]))
 
 (enable-console-print!)
