@@ -30,8 +30,7 @@
       (swap! players update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (num->keyword uid)) pls))))
       (broadcast ids-no-sender :game-lobby/player-leave (utils/target-player uid)))))
 
-;;(emit :gaming/player-leave (utils/target-player uid))
-    ;; TODO handle case of none players, need to reset gaming state
+;; TODO handle case of none players, need to reset gaming state
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Gaming events handler
@@ -40,8 +39,7 @@
 (defn process-command [{:as ev-msg :keys [?data uid]}]
   (let [payload (:payload ?data)]
     (log/info "upload cmd-msg")
-    (>!! cmd-msg-buffer payload)
-    ))
+    (>!! cmd-msg-buffer payload)))
 
 (defn find-winner [players]
   (let [all-players (:all-players players)
@@ -81,6 +79,14 @@
     (>!! sync-game-world-ch true)
     (broadcast :gaming/game-loaded {:all-game-loaded true})))
 
+(defn handle-return-to-lobby [{:as ev-msg :keys [uid]}]
+  (swap! players assoc-in [:all-players (num->keyword uid) :status] (:unready utils/player-status)) ;;change cur-player status to unready on server
+  (swap! players assoc-in [:all-players-ready] false)
+  (swap! players assoc-in [:all-players (num->keyword uid) :alive?] true)
+  (swap! players assoc-in [:all-players (num->keyword uid) :game-loaded?] false)
+  (broadcast :game-lobby/player-update (utils/target-player uid))
+  (broadcast [uid] :gaming/redirect {:dest "/gamelobby"}))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Game Lobby events handler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -100,6 +106,12 @@
 
 (defn ready-to-gaming? []
   (when (check-all-players-status :ready) (pre-enter-game)))
+
+(defn handle-player-ready [{:as ev-msg :keys [client-id uid ?data]}]
+  (log/info "player %s is ready now!" uid)
+  (swap! players assoc-in [:all-players (utils/num->keyword uid) :status] (:ready utils/player-status))
+  (broadcast :game-lobby/player-update (utils/target-player uid))
+  (ready-to-gaming?))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sente events handler
@@ -133,11 +145,8 @@
   (return-players-state uid "game-lobby"))
 
 (defmethod event :game-lobby/player-ready
-  [{:as ev-msg :keys [client-id uid ?data]}]
-  (log/info "player %s is ready now!" uid)
-  (swap! players assoc-in [:all-players (utils/num->keyword uid) :status] (:ready utils/player-status))
-  (broadcast :game-lobby/player-update (utils/target-player uid))
-  (ready-to-gaming?))
+  [{:as ev-msg}]
+  (handle-player-ready ev-msg))
 
 ;; gaming events
 
@@ -149,7 +158,7 @@
   [{:as ev-msg}]
   (process-command ev-msg))
 
-(defmethod event :gaming/iam-dead
+(defmethod event :gaming/iam-dea
   [{:as ev-msg}]
   (handle-player-die ev-msg))
 
@@ -159,13 +168,7 @@
 
 (defmethod event :gaming/return-to-lobby
   [{:as ev-msg :keys [uid]}]
-  (log/info "returne to lobby ")
-  (swap! players assoc-in [:all-players (num->keyword uid) :status] (:unready utils/player-status)) ;;change cur-player status to unready on server
-  (swap! players assoc-in [:all-players-ready] false)
-  (swap! players assoc-in [:all-players (num->keyword uid) :alive?] true)
-  (swap! players assoc-in [:all-players (num->keyword uid) :game-loaded?] false)
-  (broadcast :game-lobby/player-update (utils/target-player uid))
-  (broadcast [uid] :gaming/redirect {:dest "/gamelobby"})) 
+  (handle-return-to-lobby ev-msg)) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set up Sente events router
