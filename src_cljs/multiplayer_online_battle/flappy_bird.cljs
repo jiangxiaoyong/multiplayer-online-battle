@@ -44,7 +44,7 @@
 (defn score [{:keys [cur-time start-time] :as st}]
   (let [score (- (.abs js/Math (floor (/ (- (* (- cur-time start-time) ground-move-speed) 2200)
                                pillar-spacing)))
-                 4)]
+                 10)]
   (assoc st :score (if (neg? score) 0 score))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -173,7 +173,7 @@
         collision-flappy-cur?
         ground
         iam-winner?
-        ;;score
+        score
         )))
 
 (defn animation-loop [time-stamp]
@@ -201,11 +201,11 @@
 (defn main []
   (fn []
     ;;(let [{:keys [flappy-y timer-running score ground-pos pillar-list]} @world])
-    (let [{:keys [all-players ground-pos pillar-list timer-running game-loaded? winner]} @world]
+    (let [{:keys [all-players ground-pos pillar-list timer-running game-loaded? winner score  waiting-opponents]} @world]
       [:div#board-area
        [:div.board
-        ;; [:h1.score score]
-        (if-not timer-running
+        [:h1.score score]
+        (if-not (or timer-running waiting-opponents)
           [:a.start-button {:on-click #(go
                                          (>! reactive-ch-in {:where :gaming :ev :return-to-lobby :payload {}}))} (if-not (nil? winner) "WINNER!" "RETURN")]
           [:span])

@@ -53,7 +53,9 @@
 (def world-staring-state {:all-players {}
                           :timer-running false
                           :game-loaded? false
+                          :waiting-opponents true
                           :cur-time 0
+                          :start-time 0
                           :ground-pos 0
                           :winner nil
                           :new-pillar-height 0
