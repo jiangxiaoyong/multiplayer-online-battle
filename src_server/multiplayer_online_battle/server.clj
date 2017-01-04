@@ -3,8 +3,7 @@
   (:require [org.httpkit.server :as server]
             [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]]
-            [multiplayer-online-battle.routing :refer [ring-handler]]
-            ))
+            [multiplayer-online-battle.routing :refer [ring-handler]]))
 
 
 ;;----------- Set up web server----------------
