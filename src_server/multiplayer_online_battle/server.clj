@@ -3,8 +3,7 @@
   (:require [org.httpkit.server :as server]
             [clojure.tools.logging :as log]
             [clojure.pprint :refer [pprint]]
-            [multiplayer-online-battle.routing :refer [ring-handler]]
-            ))
+            [multiplayer-online-battle.routing :refer [ring-handler]]))
 
 
 ;;----------- Set up web server----------------
@@ -21,7 +20,7 @@
   [& [port]]
   (stop-web-server)
   (log/info "Starting http-kit server ...")
-  (let [http-kit-stop-fn (server/run-server ring-handler {:port 8080})
+  (let [http-kit-stop-fn (server/run-server ring-handler {:port 80})
         stop-fn (fn [] (http-kit-stop-fn :timeout 100))]
     (reset! web-server {:stop-fn stop-fn})))
 
