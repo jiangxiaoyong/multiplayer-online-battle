@@ -47,7 +47,7 @@
   :cljsbuild {:builds
               [{:id "landing"
                 :source-paths ["src_cljs"]
-
+                :jar true
                 ;; the presence of a :figwheel configuration here
                 ;; will cause figwheel to inject the figwheel client
                 ;; into your build
@@ -63,12 +63,14 @@
                            :output-to "resources/public/js/compiled/multiplayer_online_battle_landing.js"
                            :output-dir "resources/public/js/compiled/out_landing"
                            :source-map-timestamp true
+                           
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
                            ;; https://github.com/binaryage/cljs-devtools
-                           :preloads [devtools.preload]}}
+                           :preloads [devtools.preload]
+                           }}
                {:id "game-lobby"
                 :source-paths ["src_cljs"]
-
+                :jar true
                 ;; the presence of a :figwheel configuration here
                 ;; will cause figwheel to inject the figwheel client
                 ;; into your build
@@ -86,10 +88,11 @@
                            :source-map-timestamp true
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
                            ;; https://github.com/binaryage/cljs-devtools
-                           :preloads [devtools.preload]}}
+                           :preloads [devtools.preload]
+                           }}
                {:id "gaming"
                 :source-paths ["src_cljs"]
-
+                :jar true
                 ;; the presence of a :figwheel configuration here
                 ;; will cause figwheel to inject the figwheel client
                 ;; into your build
@@ -107,16 +110,18 @@
                            :source-map-timestamp true
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
                            ;; https://github.com/binaryage/cljs-devtools
-                           :preloads [devtools.preload]}}
+                           :preloads [devtools.preload]
+                           }}
                ;; This next build is an compressed minified build for
                ;; production. You can build this with:
                ;; lein cljsbuild once min
-               {:id "min"
+               {:id "landing_min"
                 :source-paths ["src_cljs"]
-                :compiler {:output-to "resources/public/js/compiled/multiplayer_online_battle.js"
-                           :main multiplayer-online-battle.core
+                :compiler {:output-to "resources/public/js/compiled/multiplayer_online_battle_landing_min.js"
+                           :main multiplayer-online-battle.landing
                            :optimizations :advanced
-                           :pretty-print false}}]}
+                           :pretty-print false}}
+               ]}
 
   :figwheel {;; :http-server-root "public" ;; default and assumes "resources"
              ;; :server-port 3449 ;; default
@@ -169,6 +174,7 @@
                    ;; :plugins [[cider/cider-nrepl "0.12.0"]]
                    :repl-options {; for nREPL dev you really need to limit output
                                   ;:init (set! *print-length* 50)
-                                  :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}}
-
-)
+                                  :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
+             :uberjar {:aot :all
+                       :prep-tasks ["compile" ["cljsbuild" "once"]]
+                       }})

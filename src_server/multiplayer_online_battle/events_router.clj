@@ -158,7 +158,7 @@
   [{:as ev-msg}]
   (process-command ev-msg))
 
-(defmethod event :gaming/iam-dea
+(defmethod event :gaming/iam-dead
   [{:as ev-msg}]
   (handle-player-die ev-msg))
 
