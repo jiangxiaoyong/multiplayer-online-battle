@@ -20,7 +20,7 @@
   [& [port]]
   (stop-web-server)
   (log/info "Starting http-kit server ...")
-  (let [http-kit-stop-fn (server/run-server ring-handler {:port 80})
+  (let [http-kit-stop-fn (server/run-server ring-handler {:port 8080})
         stop-fn (fn [] (http-kit-stop-fn :timeout 100))]
     (reset! web-server {:stop-fn stop-fn})))
 
