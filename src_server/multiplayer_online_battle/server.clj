@@ -19,8 +19,9 @@
    and store server info into 'web-server' atom"
   [& [port]]
   (stop-web-server)
-  (log/info "Starting http-kit server ...")
-  (let [http-kit-stop-fn (server/run-server ring-handler {:port 8080})
+  (let [port (Integer/parseInt (or (System/getenv "PORT") "8080"))
+        http-kit-stop-fn (server/run-server ring-handler {:port port})
         stop-fn (fn [] (http-kit-stop-fn :timeout 100))]
+    (log/info "Starting http-kit server at port " port) 
     (reset! web-server {:stop-fn stop-fn})))
 
