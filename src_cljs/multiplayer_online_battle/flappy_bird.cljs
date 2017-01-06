@@ -200,11 +200,12 @@
 
 (defn main []
   (fn []
-    ;;(let [{:keys [flappy-y timer-running score ground-pos pillar-list]} @world])
     (let [{:keys [all-players ground-pos pillar-list timer-running game-loaded? winner score  waiting-opponents]} @world]
       [:div#board-area
        [:div.board
         [:h1.score score]
+        (when waiting-opponents
+          [:h2.game-loading "loading..."])
         (if-not (or timer-running waiting-opponents)
           [:a.start-button {:on-click #(go
                                          (>! reactive-ch-in {:where :gaming :ev :return-to-lobby :payload {}}))} (if-not (nil? winner) "WINNER!" "RETURN")]

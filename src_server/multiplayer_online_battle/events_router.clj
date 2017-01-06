@@ -25,12 +25,12 @@
     (utils/send-fn uid (ev-player-all (utils/all-players)))))
 
 (defn handle-player-leave [uid]
-  (when (utils/player-exist? (num->keyword uid))
-    (let [ids-no-sender (no-sender uid)]
-      (swap! players update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (num->keyword uid)) pls))))
-      (broadcast ids-no-sender :game-lobby/player-leave (utils/target-player uid)))))
-
-;; TODO handle case of none players, need to reset gaming state
+  (if (utils/one-player-left?)
+    (reset-game)
+    (when (utils/player-exist? (num->keyword uid))
+      (let [ids-no-sender (no-sender uid)]
+        (swap! players update-in [:all-players] (fn [pls] (into {} (remove #(= (first %) (num->keyword uid)) pls))))
+        (broadcast ids-no-sender :game-lobby/player-leave (utils/target-player uid))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Gaming events handler

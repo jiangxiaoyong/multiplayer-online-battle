@@ -1,10 +1,8 @@
 # multiplayer-online-battle
 
-FIXME: Write a one-line description of your library/project.
-
 ## Overview
 
-FIXME: Write a paragraph about the library/project and highlight its goals.
+This is an online battle game, which allows multiple gamers challenge eath other in real time. The game is build on top of flappy-bird.
 
 ## Setup
 
@@ -13,32 +11,25 @@ FIXME: Write a paragraph about the library/project and highlight its goals.
 lein new figwheel hello-world -- --reagent ;; for a reagent based project 
 ```
 
-To get an interactive development environment run:
+## Deployment
 
-    lein figwheel
+HeroKu was choosed as the deployment platform.
+This github repo has been connected to HeroKu, and the app will be automatically deployed after each push change to master branch
+Procfile is to explicitly declare what command should be executed to start this app
 
-and open your browser at [localhost:3449](http://localhost:3449/).
-This will auto compile and send all changes to the browser without the
-need to reload. After the compilation process is complete, you will
-get a Browser Connected REPL. An easy way to try it is:
+[HeroKu official guide] (https://devcenter.heroku.com/articles/getting-started-with-clojure#introduction)
 
-    (js/alert "Am I connected?")
+### Set up Heroku
 
-and you should see an alert in the browser window.
+login first:
 
-To clean all compiled files:
+    heroku login
 
-    lein clean
+initial set up:
 
-To create a production build run:
+    heroku create
 
-    lein do clean, cljsbuild once min
+deploy the app:
 
-And open your browser in `resources/public/index.html`. You will not
-get live reloading, nor a REPL. 
+    git push heroku master
 
-## License
-
-Copyright © 2014 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.

@@ -51,12 +51,12 @@
                 ;; the presence of a :figwheel configuration here
                 ;; will cause figwheel to inject the figwheel client
                 ;; into your build
-                ;; :figwheel {:on-jsload "multiplayer-online-battle.landing/fig-reload"
-                ;;            ;; :open-urls will pop open your application
-                ;;            ;; in the default browser once Figwheel has
-                ;;            ;; started and complied your application.
-                ;;            ;; Comment this out once it no longer serves you.
-                ;;            :open-urls ["http://localhost:8080/index.html"]}
+                :figwheel {:on-jsload "multiplayer-online-battle.landing/fig-reload"
+                           ;; :open-urls will pop open your application
+                           ;; in the default browser once Figwheel has
+                           ;; started and complied your application.
+                           ;; Comment this out once it no longer serves you.
+                           :open-urls ["http://localhost:8080/index.html"]}
 
                 :compiler {:main multiplayer-online-battle.landing
                            :asset-path "js/compiled/out_landing"
@@ -66,7 +66,7 @@
                            
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
                            ;; https://github.com/binaryage/cljs-devtools
-                           ;;:preloads [devtools.preload]
+                           :preloads [devtools.preload]
                            }}
                {:id "game-lobby"
                 :source-paths ["src_cljs"]
@@ -74,12 +74,12 @@
                 ;; the presence of a :figwheel configuration here
                 ;; will cause figwheel to inject the figwheel client
                 ;; into your build
-                ;; :figwheel {:on-jsload "multiplayer-online-battle.game-lobby/fig-reload"
-                ;;            ;; :open-urls will pop open your application
-                ;;            ;; in the default browser once Figwheel has
-                ;;            ;; started and complied your application.
-                ;;            ;; Comment this out once it no longer serves you.
-                ;;            :open-urls ["http://localhost:8080/gamelobby.html"]}
+                :figwheel {:on-jsload "multiplayer-online-battle.game-lobby/fig-reload"
+                           ;; :open-urls will pop open your application
+                           ;; in the default browser once Figwheel has
+                           ;; started and complied your application.
+                           ;; Comment this out once it no longer serves you.
+                           :open-urls ["http://localhost:8080/gamelobby.html"]}
 
                 :compiler {:main multiplayer-online-battle.game-lobby
                            :asset-path "js/compiled/out_game_lobby"
@@ -88,7 +88,7 @@
                            :source-map-timestamp true
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
                            ;; https://github.com/binaryage/cljs-devtools
-                           ;;:preloads [devtools.preload]
+                           :preloads [devtools.preload]
                            }}
                {:id "gaming"
                 :source-paths ["src_cljs"]
@@ -96,12 +96,12 @@
                 ;; the presence of a :figwheel configuration here
                 ;; will cause figwheel to inject the figwheel client
                 ;; into your build
-                ;; :figwheel {:on-jsload "multiplayer-online-battle.game-control/fig-reload"
-                ;;            ;; :open-urls will pop open your application
-                ;;            ;; in the default browser once Figwheel has
-                ;;            ;; started and complied your application.
-                ;;            ;; Comment this out once it no longer serves you.
-                ;;            :open-urls ["http://localhost:8080/gaming.html"]}
+                :figwheel {:on-jsload "multiplayer-online-battle.game-control/fig-reload"
+                           ;; :open-urls will pop open your application
+                           ;; in the default browser once Figwheel has
+                           ;; started and complied your application.
+                           ;; Comment this out once it no longer serves you.
+                           :open-urls ["http://localhost:8080/gaming.html"]}
 
                 :compiler {:main multiplayer-online-battle.game-control
                            :asset-path "js/compiled/out_game_control"
@@ -110,7 +110,7 @@
                            :source-map-timestamp true
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
                            ;; https://github.com/binaryage/cljs-devtools
-                           ;;:preloads [devtools.preload]
+                           :preloads [devtools.preload]
                            }}
                ;; This next build is an compressed minified build for
                ;; production. You can build this with:
@@ -119,6 +119,20 @@
                 :source-paths ["src_cljs"]
                 :compiler {:output-to "resources/public/js/compiled/multiplayer_online_battle_landing_min.js"
                            :main multiplayer-online-battle.landing
+                           :optimizations :advanced
+                           :pretty-print false}}
+               {:id "game_lobby_min"
+                :source-paths ["src_cljs"]
+                :compiler {:output-to "resources/public/js/compiled/multiplayer_online_battle_game_lobby_min.js"
+                           :main multiplayer-online-battle.game-lobby
+                           :externs ["resources/public/js/rx.all.js"]
+                           :optimizations :advanced
+                           :pretty-print false}}
+               {:id "gaming_min"
+                :source-paths ["src_cljs"]
+                :compiler {:output-to "resources/public/js/compiled/multiplayer_online_battle_game_control_min.js"
+                           :main multiplayer-online-battle.game-control
+                           :externs ["resources/public/js/rx.all.js"]
                            :optimizations :advanced
                            :pretty-print false}}
                ]}
@@ -176,5 +190,5 @@
                                   ;:init (set! *print-length* 50)
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
              :uberjar {:aot :all
-                       :prep-tasks ["compile" ["cljsbuild" "once"]]
+                       :prep-tasks ["compile" ["cljsbuild" "once" "landing_min" "game_lobby_min" "gaming_min"]]
                        }})

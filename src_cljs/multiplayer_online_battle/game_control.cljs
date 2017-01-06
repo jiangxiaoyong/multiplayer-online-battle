@@ -25,6 +25,14 @@
           :jump-start-time cur-time
           :jump-step jump-step)))
 
+(defn reset-state [time-stamp]
+  (-> @world
+      (update-in [:pillar-list] (fn [pls] (map #(assoc % :start-time time-stamp) pls)))
+      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :start-time] time-stamp) pls))))
+      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :jump-start-time] time-stamp) pls))))
+      (assoc-in [:winner] nil)
+      (assoc-in [:start-time] time-stamp)))
+
 (defn start-game []
   (.requestAnimationFrame
    js/window
@@ -90,14 +98,6 @@
     (let [ready (<! chsk-ready?)]
       (when ready
         (send-to-network {:ev :gaming/states :payload {}})))))
-
-(defn reset-state [time-stamp]
-  (-> @world
-      (update-in [:pillar-list] (fn [pls] (map #(assoc % :start-time time-stamp) pls)))
-      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :start-time] time-stamp) pls))))
-      (update-in [:all-players] (fn [pls] (into {} (map #(assoc-in % [1 :jump-start-time] time-stamp) pls))))
-      (assoc-in [:winner] nil)
-      (assoc-in [:start-time] time-stamp)))
 
 ;;; game-lobby-control ;;;
 
