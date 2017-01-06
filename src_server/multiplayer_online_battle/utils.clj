@@ -73,3 +73,9 @@
 
 (defn player-exist? [id]
   (contains? (:all-players @players) id))
+
+(defn all-leave? []
+  (empty? (:all-players @players)))
+
+(defn one-player-left? []
+  (if (= (count (:all-players @players)) 1) true false))
