@@ -1,45 +1,3 @@
-@import url(https://fonts.googleapis.com/css?family=Roboto:400,300,100,700,500);
-
-body {
-  background:#F7F7F7;
-  color:#666666;
-  font-family: 'Roboto', sans-serif;
-  font-weight:100;
-}
-
-body{
-  width: 100%;
-  background: -webkit-linear-gradient(left, #22d686, #24d3d3, #22d686, #24d3d3);
-  background: linear-gradient(to right, #22d686, #24d3d3, #22d686, #24d3d3);
-  background-size: 600% 100%;
-  -webkit-animation: HeroBG 20s ease infinite;
-          animation: HeroBG 20s ease infinite;
-}
-
-@-webkit-keyframes HeroBG {
-  0% {
-    background-position: 0 0;
-  }
-  50% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
-}
-
-@keyframes HeroBG {
-  0% {
-    background-position: 0 0;
-  }
-  50% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
-}
-
 
 .panel {
   border-radius: 5px;
@@ -225,9 +183,23 @@ label {
 }
 
 .container {
-  margin-top: 150px;
+  margin-top: 270px;
 }
 
 .alert-msg-box {
   display: none;
+}
+
+/*  particle packground */
+
+#particles {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    position: absolute;
+    z-index: -2;
 }

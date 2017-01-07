@@ -14,7 +14,7 @@ Note: At least two players are needed to start game, just opening two different 
 
 ### Running instruction locally for development
 
-Thanks to Emacs, CIDER, nREPL and Figwheel providing efficient interactive development environment that rocks, which enale REPL-driven development for both front-end and back-end.
+Thanks to Emacs, CIDER, nREPL and Figwheel providing efficient interactive development environment that rocks, which enable REPL-driven development for both front-end and back-end.
 
 ### Back-end: 
 
