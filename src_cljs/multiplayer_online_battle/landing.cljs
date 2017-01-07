@@ -34,7 +34,7 @@
             [:div.col-lg-12
              [:form#register-form
               [:h2
-               [:center "Multiple Online Battle Arena"]]
+               [:center "Multiplayer Online Battle Arena"]]
               [:div {:class (if-not (get-in @components-state [:landing-pg :allow-in]) "animated tada alert alert-info" "alert-msg-box")}
                [:center
                 [:strong "Info! "]

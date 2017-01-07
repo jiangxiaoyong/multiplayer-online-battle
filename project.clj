@@ -125,14 +125,14 @@
                 :source-paths ["src_cljs"]
                 :compiler {:output-to "resources/public/js/compiled/multiplayer_online_battle_game_lobby_min.js"
                            :main multiplayer-online-battle.game-lobby
-                           :externs ["resources/public/js/rx.all.js"]
+                           :externs ["resources/public/js/rx.all.min.js"]
                            :optimizations :advanced
                            :pretty-print false}}
                {:id "gaming_min"
                 :source-paths ["src_cljs"]
                 :compiler {:output-to "resources/public/js/compiled/multiplayer_online_battle_game_control_min.js"
                            :main multiplayer-online-battle.game-control
-                           :externs ["resources/public/js/rx.all.js"]
+                           :externs ["resources/public/js/rx.all.min.js"]
                            :optimizations :advanced
                            :pretty-print false}}
                ]}
