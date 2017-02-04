@@ -15,7 +15,7 @@
 (defn sub-gaming-ev []
   (sub reactive-publication :gaming-ev gaming-ev-ch))
 
-(def jump-step 7)
+(def jump-step 6)
 
 (defn jump [{:keys [jump-count] :as state} cur-time]
   (infof "jump!")
