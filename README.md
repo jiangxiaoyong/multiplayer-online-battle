@@ -26,17 +26,22 @@ Thanks to Emacs, CIDER, nREPL and Figwheel providing efficient interactive devel
 
 ### Frond-end:
 
+*please comment out landing_min, game_lobby_min, gaming_min build instructions in file project.clj at local dev environment*
+
 * M-x to open shell
-* lein cljsbuild once
-* lein figwheel landing
+* `lein cljsbuild once`
+* `lein figwheel landing`
 
 or
 
-* leign figwheel game-lobby
+* `leign figwheel game-lobby`
 
 or
 
-* lein figwheel gaming
+* `lein figwheel gaming`
+
+#### build all min at once
+* `lein uberjar`
 
 
 ## Deployment
@@ -60,4 +65,3 @@ initial set up:
 deploy the app:
 
     git push heroku master
-
